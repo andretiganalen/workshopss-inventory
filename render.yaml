@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: radar-ew-inventory
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+    # --- OPTIONAL: PERSISTENT STORAGE (Starter Plan & above) ---
+    # Uncomment the disk configuration below if upgrading to Starter plan
+    # to retain newly added inventory and uploaded files across re-deployments.
+    # disk:
+    #   name: inventory-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # envVars:
+    #   - key: DATA_DIR
+    #     value: /var/data

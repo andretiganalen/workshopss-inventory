@@ -1,0 +1,3831 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facility Workshop Inventory & Historical Repository</title>
+    <style>
+        /* Requirement 18: Standard Arial font throughout the entire app */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+
+        /* Requirement 10: White background (Light Mode Default) */
+        :root[data-theme="light"] {
+            --bg-body: #ffffff;
+            --bg-card: #f8f9fa;
+            --bg-card-hover: #f1f3f5;
+            --bg-header: #ffffff;
+            --border: #d0d7de;
+            --border-subtle: #eaeef2;
+            --text-main: #1f2328;
+            --text-muted: #656d76;
+            --text-earlier: #767676;
+            /* Requirement 15: Earlier date grey */
+            --text-current: #1a7f37;
+            /* Requirement 15, 52: Current state bold green */
+            --accent: #1f883d;
+            --accent-hover: #1a7f37;
+            --toolbar-bg: #f6f8fa;
+            --table-header-bg: #f0f2f5;
+            --modal-bg: #ffffff;
+            --sidebar-bg: #ffffff;
+            --tag-bg: #eef1f4;
+            --link-color: #0969da;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --portal-color: rgba(31, 35, 40, 0.28);
+        }
+
+        /* Requirement 10: Dark Mode Switchable on top header */
+        :root[data-theme="dark"] {
+            --bg-body: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #21262d;
+            --bg-header: #161b22;
+            --border: #30363d;
+            --border-subtle: #21262d;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --text-earlier: #8b949e;
+            --text-current: #3fb950;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --toolbar-bg: #161b22;
+            --table-header-bg: #21262d;
+            --modal-bg: #161b22;
+            --sidebar-bg: #161b22;
+            --tag-bg: #21262d;
+            --link-color: #58a6ff;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            --portal-color: rgba(230, 237, 243, 0.25);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Superadmin Management Banner */
+        .superadmin-banner {
+            background: #633c01;
+            color: #f0f6fc;
+            padding: 4px 16px;
+            font-size: 0.75rem;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #9e6a03;
+        }
+
+        /* Top Header */
+        header {
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 {
+            font-size: 1.15rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .badge-room {
+            background: var(--tag-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            font-weight: normal;
+        }
+
+        .status-pill {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #dafbe1;
+            color: #1a7f37;
+        }
+
+        .status-paused {
+            background: #ffebe9;
+            color: #cf222e;
+        }
+
+        /* Requirement 55: Log transaction button on top left */
+        .btn-header {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-header:hover {
+            opacity: 0.9;
+        }
+
+        .btn-new-tool {
+            background: #0969da;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            margin-left: 10px;
+        }
+
+        .nav-tab {
+            padding: 5px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: all 0.15s ease;
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .auth-status-pill {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--tag-bg);
+            color: var(--text-muted);
+        }
+
+        /* Filter Toolbar */
+        .toolbar {
+            background: var(--toolbar-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1 1 240px;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 6px 10px 6px 30px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .filter-select {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .btn-reset {
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-reset:hover {
+            color: #cf222e;
+            border-color: #cf222e;
+        }
+
+        /* Main Workspace & Table */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meta-strip {
+            padding: 6px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .expenses-breakdown-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .total-expenses-pill {
+            font-weight: bold;
+            color: var(--text-main);
+            font-size: 0.85rem;
+        }
+
+        .subtotal-expenses-pill {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 0.85rem;
+        }
+
+        .expense-pct-pill {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(31, 111, 235, 0.12);
+            color: var(--link-color);
+            border: 1px solid rgba(56, 139, 253, 0.35);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--table-header-bg);
+        }
+
+        th {
+            padding: 9px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: bold;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        th.sortable-header {
+            cursor: pointer;
+        }
+
+        th.sortable-header:hover {
+            color: var(--text-main);
+            background: var(--bg-card-hover);
+        }
+
+        td {
+            padding: 9px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        th.col-purpose,
+        td.col-purpose {
+            white-space: normal !important;
+            min-width: 250px;
+            max-width: 450px;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        tbody tr {
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        /* Typography & State Styling (Req 15, 45, 52) */
+        .state-current {
+            font-weight: bold;
+            color: var(--text-current);
+        }
+
+        .state-past {
+            color: var(--text-earlier);
+            font-style: italic;
+        }
+
+        .date-current {
+            color: var(--text-current);
+            font-weight: bold;
+        }
+
+        .date-earlier {
+            color: var(--text-earlier);
+        }
+
+        .tool-name-link {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .tool-name-link:hover {
+            text-decoration: underline;
+        }
+
+        .file-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .file-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Floating Tooltip Card (Req 14: ALWAYS ON TOP LAYER, z-index: 999999) */
+        #floatingTooltip {
+            position: fixed;
+            display: none;
+            z-index: 999999;
+            width: 320px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+            pointer-events: none;
+            padding: 12px;
+            font-size: 0.78rem;
+        }
+
+        #floatingTooltip img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            background: #000;
+        }
+
+        .tt-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .tt-label {
+            color: var(--text-muted);
+        }
+
+        .tt-val {
+            font-weight: bold;
+        }
+
+        /* Slide-in Sidebar on the LEFT (Req 23) */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            display: none;
+        }
+
+        .sidebar-overlay.open {
+            display: block;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -480px;
+            width: 460px;
+            height: 100%;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            z-index: 10000;
+            transition: left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .sidebar-body {
+            padding: 18px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-submit {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-delete {
+            background: transparent;
+            color: #cf222e;
+            border: 1px solid #cf222e;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        .btn-delete:hover {
+            background: #ffebe9;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .btn-close:hover {
+            color: var(--text-main);
+        }
+
+        .terminal-warning-box {
+            background: #ffebe9;
+            color: #cf222e;
+            border: 1px solid #ff8182;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        :root[data-theme="dark"] .terminal-warning-box {
+            background: #490202;
+            color: #ff7b72;
+            border-color: #cf222e;
+        }
+
+        .guest-notice-box {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 440px;
+            max-width: 95vw;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        /* Requirement 61: Bottom-left buttons for Download Report & Stock Opname */
+        .bottom-left-actions {
+            position: fixed;
+            bottom: 12px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .btn-bottom-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-bottom-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-opname:hover {
+            border-color: #0969da;
+            color: #0969da;
+        }
+
+        /* Requirement 28: Secret lower portal on bottom right: "🔒 Portal", small and transparent */
+        .secret-lower-portal {
+            position: fixed;
+            bottom: 12px;
+            right: 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--portal-color);
+            font-size: 0.75rem;
+            font-family: Arial, sans-serif;
+            padding: 3px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+            opacity: 0.35;
+            transition: all 0.2s ease;
+        }
+
+        .secret-lower-portal:hover {
+            opacity: 1;
+            border-color: var(--border);
+            background: var(--bg-card);
+            color: var(--text-main);
+        }
+
+        /* Opname Table */
+        .opname-table th,
+        .opname-table td {
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            font-size: 0.78rem;
+        }
+
+        .opname-table th {
+            background: var(--table-header-bg);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Superadmin Management Bar -->
+    <div id="superadminBanner" class="superadmin-banner">
+        <div>
+            <strong>Superadmin Active:</strong>
+            <span id="activeRoomDisplay">Room: Radar EW Workshop A</span> |
+            <span id="activeGroupDisplay">Group: Instrumentation Unit</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="/console" class="theme-toggle-btn"
+                style="padding: 3px 8px; text-decoration: none; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">🛠️
+                Admin Console</a>
+            <button onclick="openSuperadminSettings('branding')" class="theme-toggle-btn"
+                style="padding: 3px 8px; color: var(--accent);">🎨 Branding &amp; Logo</button>
+            <button onclick="openSuperadminSettings('room')" class="theme-toggle-btn"
+                style="padding: 3px 8px;">Rooms</button>
+            <button id="btnPauseRoom" onclick="togglePauseRoom()" class="theme-toggle-btn"
+                style="padding: 3px 8px; color: #cf222e;">Pause</button>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="header-left">
+            <!-- Logo on top left -->
+            <div id="appLogoContainer" style="display:inline-flex; align-items:center;">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    style="border-radius:6px; vertical-align:middle;">
+                    <rect width="32" height="32" rx="6" fill="#1f883d" />
+                    <circle cx="16" cy="16" r="11" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2 2" />
+                    <circle cx="16" cy="16" r="6" stroke="#ffffff" stroke-width="1.5" />
+                    <path d="M16 16L24 8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                    <circle cx="16" cy="16" r="2.2" fill="#ffffff" />
+                </svg>
+            </div>
+            <h1>
+                <span id="mainRoomHeading">Radar EW Facility Workshop</span>
+                <span class="badge-room" id="badgeRoom">Workshop SS</span>
+                <span id="roomStatusBadge" class="status-pill status-active">● Active</span>
+            </h1>
+            <!-- Action Buttons: Log & Add -->
+            <button class="btn-header" onclick="openNewTransactionForm()">Log</button>
+            <button class="btn-header btn-new-tool" onclick="openNewEquipmentModal()" title="Add Equipment">Add</button>
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab" title="Portal Entrance">Portal</a>
+                <a href="/dashboard" class="nav-tab active">Equipment</a>
+                <a href="/consumables" class="nav-tab">Consumables</a>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <span id="authStatusPill" class="auth-status-pill" onclick="openLoginModal()" style="cursor:pointer;"
+                title="Click to log in as Admin/Superadmin">Guest View</span>
+            <button id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()"
+                title="Switch Theme">Theme</button>
+            <button id="btnLogout" style="display:none;" class="theme-toggle-btn" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Filter & Full Database Search Toolbar -->
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput"
+                placeholder="Search database: name, brand, model, serial, PIC, purpose, date..."
+                oninput="debounceSearch()">
+        </div>
+
+        <!-- Requirement 50: Drop down selector by Locations, Project/Program, Equipment Name, PIC, Condition, and State -->
+        <select id="locationFilterSelect" class="filter-select" onchange="syncToolbarLocationToHeader()">
+            <option value="">All Locations</option>
+        </select>
+
+        <select id="projectFilterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="">All Projects / Programs</option>
+        </select>
+
+        <select id="equipmentFilterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="">All Equipment</option>
+        </select>
+
+        <select id="picFilterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="">All PIC</option>
+        </select>
+
+        <select id="conditionFilterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="">All Conditions</option>
+        </select>
+
+        <select id="stateFilterSelect" class="filter-select" onchange="applyFilters()">
+            <option value="">All States</option>
+        </select>
+
+        <!-- Requirement 57: Reset button to clear search and all filters -->
+        <button class="btn-reset" onclick="resetAllFilters()" title="Reset Filters">Reset</button>
+    </div>
+
+    <!-- Main Table View -->
+    <main>
+        <div class="meta-strip">
+            <div>
+                Showing <strong id="loadedCount">0</strong> of <strong id="totalLogs">0</strong> transaction logs •
+                Standard log Arial font
+            </div>
+            <!-- Total Inventory Expenses side by side with Subtotal Selected, then percentage on very right side -->
+            <div class="expenses-breakdown-bar">
+                <span>Total Inventory Expenses: <span id="totalExpensesDisplay" class="total-expenses-pill">0</span>
+                    IDR</span>
+                <span style="color:var(--border); font-weight:300;">|</span>
+                <span>Subtotal Selected: <strong id="subtotalExpensesDisplay" class="subtotal-expenses-pill">0</strong>
+                    IDR</span>
+                <span id="expensePctDisplay" class="expense-pct-pill"
+                    title="Percentage of Total Inventory Expenses">100.0%</span>
+            </div>
+        </div>
+
+        <div class="table-container" id="tableContainer" onscroll="handleScroll()">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 45px; text-align: center;">No</th>
+                        <th id="thDateSort" class="sortable-header" style="width: 140px;" onclick="toggleDateSort()"
+                            title="Click to toggle sorting ASC/DESC">
+                            Date <span id="sortIndicator">▼</span>
+                        </th>
+                        <th style="width: 180px;">Equipment Name</th>
+                        <th style="width: 95px;">Tool ID</th>
+                        <th style="width: 110px;">State</th>
+                        <th style="width: 130px;">Condition</th>
+                        <th style="width: 140px;">Room / Location</th>
+                        <th style="width: 120px; text-align: right;">Expenses</th>
+                        <th style="width: 110px;">PIC</th>
+                        <th class="col-purpose">Purpose / Activity</th>
+                        <th style="width: 60px; text-align: center;">Photo</th>
+                        <th style="width: 60px; text-align: center;">Doc</th>
+                        <th style="width: 70px; text-align: center;" id="thAdminAction">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionTableBody">
+                    <!-- Populated dynamically via infinite scroll & filters -->
+                </tbody>
+            </table>
+
+            <div id="infiniteLoader"
+                style="padding: 16px; text-align: center; color: var(--text-muted); display: none;">
+                Loading more inventory records...
+            </div>
+        </div>
+    </main>
+
+    <!-- Requirement 14: Hover card preview ALWAYS on TOP LAYER -->
+    <div id="floatingTooltip">
+        <img id="ftPhoto" src="" alt="Equipment Photo">
+        <div class="tt-title" id="ftTitle"></div>
+        <div class="tt-row"><span class="tt-label">Brand:</span><span class="tt-val" id="ftBrand"></span></div>
+        <div class="tt-row"><span class="tt-label">Model:</span><span class="tt-val" id="ftModel"></span></div>
+        <div class="tt-row"><span class="tt-label">Type:</span><span class="tt-val" id="ftType"></span></div>
+        <div class="tt-row"><span class="tt-label">Serial Number:</span><span class="tt-val" id="ftSerial"></span></div>
+        <div class="tt-row"><span class="tt-label">Project / Program:</span><span class="tt-val"
+                style="color:var(--link-color);" id="ftProject"></span></div>
+        <div class="tt-row"><span class="tt-label">Location:</span><span class="tt-val" id="ftLocation"></span></div>
+    </div>
+
+    <!-- Requirement 23: Slide-in Sidebar (Transaction Details & Form on the LEFT) -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2 id="sidebarTitle">Transaction Form</h2>
+            <button class="btn-close" onclick="closeSidebar()">&times;</button>
+        </div>
+        <div class="sidebar-body">
+            <form id="transactionForm" onsubmit="saveTransaction(event)">
+                <input type="hidden" id="transId" name="trans_id">
+
+                <div id="sidebarTerminalWarning" class="terminal-warning-box">
+                    ⚠️ Notice: This equipment has reached terminal state and cannot accept further transactions.
+                </div>
+
+                <div id="sidebarGuestEditNotice" class="guest-notice-box">
+                    <div>🔒 <strong>View-only mode:</strong> You are viewing an existing transaction log. Editing or
+                        deleting past records requires administrator authentication.</div>
+                    <div style="margin-top:8px;">
+                        <button type="button" id="btnGuestLogNewForTool" class="btn-action-small"
+                            style="background:var(--accent); color:#fff; border-color:var(--accent); font-weight:bold; padding:4px 10px;"
+                            onclick="convertEditToNewTransaction()">+ Log New Transaction for this Equipment</button>
+                    </div>
+                </div>
+
+                <!-- Requirement 79: Photo & Document Upload on top of form for item awareness & preventing mistakes -->
+                <div
+                    style="background:var(--tag-bg); border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:14px;">
+                    <div
+                        style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                        <span>📸 Visual Item Verification & Media Upload</span>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:0.8rem; font-weight:600;">Photo Upload (Optional)</label>
+                        <input type="file" id="formPhoto" name="photo" accept="image/*" class="form-control"
+                            onchange="previewFormPhotoFile(this)">
+                        <div id="previewFormPhotoContainer" style="display:none; margin-top:6px;">
+                            <img id="previewFormPhotoImg" src="" alt="Selected Photo"
+                                style="max-height:100px; max-width:100%; border-radius:4px; border:1px solid var(--border); object-fit:contain; display:block;">
+                        </div>
+                        <div id="existingPhoto" style="margin-top:4px;"></div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label style="font-size:0.8rem; font-weight:600;">Document Upload (Optional)</label>
+                        <input type="file" id="formDoc" name="document"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,image/*"
+                            class="form-control">
+                        <div id="existingDoc" style="margin-top:4px;"></div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">PDF, DOCX, XLSX, TXT,
+                            CSV, etc.</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Transaction Date & Time *</label>
+                    <input type="text" id="formDateTime" name="date_time" class="form-control" required
+                        placeholder="YYYY-MM-DD HH:MM">
+                </div>
+
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">Filter Equipment by
+                        Project / Program:</label>
+                    <select id="formProjectFilter" class="form-control" style="font-size:0.8rem; padding:5px 8px;"
+                        onchange="handleFormProjectFilterChange()">
+                        <option value="">All Projects / Programs</option>
+                    </select>
+                </div>
+
+                <!-- Requirement 61: Equipment Name dropdown list from historical Name column, with Auto Title Case -->
+                <div class="form-group">
+                    <label>Equipment Name * (Dropdown from historical names or type new)</label>
+                    <input type="text" id="formEquipmentName" list="historicalNamesDatalist" class="form-control"
+                        placeholder="Select or type equipment name (e.g. Printer, Oscilloscope)..."
+                        oninput="handleEquipmentNameInput()" onblur="handleEquipmentNameBlur()">
+                    <datalist id="historicalNamesDatalist"></datalist>
+                </div>
+
+                <!-- Requirement 59: Select specific item or register new equipment -->
+                <div class="form-group">
+                    <label>Select Specific Equipment / Serial Item *</label>
+                    <select id="formToolId" name="tool_id" class="form-control" required
+                        onchange="handleToolSelectionChange()">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Inline New Equipment Registration Section (Req 59, 61) -->
+                <div id="inlineNewEquipmentSection"
+                    style="display:none; background:var(--tag-bg); border:1px solid var(--accent); border-radius:6px; padding:12px; margin-bottom:14px;">
+                    <div style="font-weight:bold; font-size:0.8rem; color:var(--accent); margin-bottom:8px;">
+                        ✨ Register New Equipment (Any user can add new tools)
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Tool ID <span
+                                    style="font-weight:normal; color:var(--text-muted);">(Auto if blank)</span></label>
+                            <div style="display:flex; gap:4px;">
+                                <input type="text" id="formNewToolId" name="new_tool_id" class="form-control"
+                                    placeholder="e.g. IN-OSC-00001 (Auto if blank)">
+                                <button type="button" class="theme-toggle-btn"
+                                    style="padding:0 6px; font-size:0.72rem; white-space:nowrap;"
+                                    onclick="generateInlineToolIdNow()" title="Auto generate Tool ID">✨ Auto</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Category *</label>
+                            <select id="formNewToolCategory" name="new_tool_category" class="form-control"
+                                onchange="autoSuggestInlineToolId()">
+                                <option value="Instrumentation">Instrumentation</option>
+                                <option value="Tools">Tools</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Machinery">Machinery</option>
+                                <option value="Documentation">Documentation</option>
+                                <option value="Systems">Systems</option>
+                                <option value="Antennas">Antennas</option>
+                                <option value="Calibration">Calibration</option>
+                                <option value="Consumables">Consumables</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Brand *</label>
+                            <input type="text" id="formNewToolBrand" name="new_tool_brand" class="form-control"
+                                placeholder="e.g. Rigol, Fluke, HP">
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Model *</label>
+                            <input type="text" id="formNewToolModel" name="new_tool_model" class="form-control"
+                                placeholder="e.g. DS1054Z">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Type / Variant</label>
+                            <input type="text" id="formNewToolType" name="new_tool_type" class="form-control"
+                                placeholder="e.g. 4-Channel Digital Storage">
+                        </div>
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.75rem;">Serial Number *</label>
+                            <input type="text" id="formNewToolSerial" name="new_tool_serial" class="form-control"
+                                placeholder="e.g. SN-994821">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:4px;">
+                        <label style="font-size:0.75rem;">Initial Location *</label>
+                        <select id="formNewToolRoom" name="new_tool_room" class="form-control">
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:4px;">
+                        <label style="font-size:0.75rem;">Belongs to Project / Program *</label>
+                        <input type="text" id="formNewToolProject" name="new_tool_project" class="form-control"
+                            list="allProjectsDatalist" value="Radar EW Facility Project"
+                            placeholder="e.g. Radar EW Facility Project">
+                    </div>
+                </div>
+
+                <div id="selectedToolSpecs"
+                    style="background:var(--tag-bg); border:1px solid var(--border); border-radius:4px; padding:8px; font-size:0.75rem; margin-bottom:14px;">
+                    <div>Brand & Model: <strong id="previewBrandModel">-</strong></div>
+                    <div>Type & Serial: <strong id="previewTypeSerial">-</strong></div>
+                    <div>Project / Program: <strong id="previewProject" style="color:var(--link-color);">-</strong>
+                    </div>
+                    <div>Facility Location: <strong id="previewLocation">-</strong></div>
+                    <div>Current State: <strong id="previewCurrentState">-</strong></div>
+                </div>
+
+                <!-- Requirement 60 & 75: Option to Move Location (Dropdown list only) -->
+                <div class="form-group">
+                    <label>Move / Relocate Location (Optional)</label>
+                    <select id="formMoveLocation" name="move_location" class="form-control">
+                        <option value="">-- Keep Current Location --</option>
+                    </select>
+                </div>
+
+                <!-- Requirement 56: Input Log for State are dropdown for all possibilities -->
+                <div class="form-group">
+                    <label>Equipment State Cycle *</label>
+                    <select id="formState" name="state" class="form-control" required>
+                        <option value="Active">Active (Operational)</option>
+                        <option value="New Purchase">New Purchase (Initial Inception)</option>
+                        <option value="Transfer">Transfer (Relocation / Project Assignment)</option>
+                        <option value="Borrow">Borrow (Temporary Checked Out)</option>
+                        <option value="Maintenance">Maintenance (Routine Servicing)</option>
+                        <option value="Repair">Repair (Corrective Action)</option>
+                        <option value="Damage">Damage (Degraded/Impaired)</option>
+                        <option value="Broken">Broken (Inoperable)</option>
+                        <option value="Lost">Lost (Missing from inventory)</option>
+                        <option value="Junk">Junk (Depreciated/Scrap)</option>
+                        <option value="Donated">Donated (Transferred out)</option>
+                        <option value="Sell">Sell (Liquidated)</option>
+                        <option value="Scrapped">Scrapped (Parts Harvested)</option>
+                        <option value="Retired">Retired (Decommissioned)</option>
+                        <option value="Dispose">Dispose (Final Disposal)</option>
+                    </select>
+                </div>
+
+                <!-- Expenses in IDR, with comma digit separator -->
+                <div class="form-group">
+                    <label>Transaction Price / Expense (IDR)</label>
+                    <input type="text" inputmode="numeric" id="formPrice" name="price" class="form-control" value="0"
+                        placeholder="e.g. 500,000" oninput="formatNumberInput(this)">
+                </div>
+
+                <!-- Requirement 55: Input Log for Current Condition are dropdown for all possibilities -->
+                <div class="form-group">
+                    <label>Current Condition *</label>
+                    <select id="formCondition" name="condition" class="form-control" required>
+                        <option value="Good / Operational">Good / Operational</option>
+                        <option value="Calibrated & Certified">Calibrated & Certified</option>
+                        <option value="Brand New / Sealed">Brand New / Sealed</option>
+                        <option value="Fair / Minor Wear">Fair / Minor Wear</option>
+                        <option value="Needs Cleaning / Consumables">Needs Cleaning / Consumables</option>
+                        <option value="Needs Calibration / Maintenance">Needs Calibration / Maintenance</option>
+                        <option value="Under Repair">Under Repair</option>
+                        <option value="Damaged / Degraded">Damaged / Degraded</option>
+                        <option value="Broken / Inoperable">Broken / Inoperable</option>
+                        <option value="Decommissioned / Disposed">Decommissioned / Disposed</option>
+                        <option value="Missing / Lost">Missing / Lost</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Person In Charge (PIC) *</label>
+                    <input type="text" id="formPic" name="pic" class="form-control" required
+                        placeholder="e.g. Amina K.">
+                </div>
+
+                <div class="form-group">
+                    <label>Purpose / Activity Details *</label>
+                    <textarea id="formPurpose" name="purpose" rows="3" class="form-control" required
+                        placeholder="Detail the activity, maintenance notes, or reason..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:flex; align-items:center; gap:8px; font-weight:normal; cursor:pointer;">
+                        <input type="checkbox" id="formIsCurrent" name="is_current" value="1">
+                        <span>Mark as Current State (Green font only)</span>
+                    </label>
+                </div>
+
+                <div id="superadminOverrideBox" style="display:none; margin-bottom:12px;" class="form-group">
+                    <label
+                        style="display:flex; align-items:center; gap:8px; color:#cf222e; font-weight:bold; cursor:pointer;">
+                        <input type="checkbox" id="formSuperadminOverride" name="superadmin_override" value="1">
+                        <span>Superadmin Overdrive: Force transaction on terminated equipment</span>
+                    </label>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="submit" class="btn-submit" id="btnSubmitForm">Save</button>
+                    <button type="button" id="btnDeleteForm" class="btn-delete" style="display:none;"
+                        onclick="confirmDeleteCurrent()">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add New Equipment / Tool (Any user can register) -->
+    <div id="newEquipmentModal" class="modal">
+        <div class="modal-box" style="width:680px; max-height:92vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <h3 style="font-size:0.95rem;">+ Register New Workshop Equipment / Tool</h3>
+                <button class="btn-close" onclick="closeNewEquipmentModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <form id="newEquipmentForm" onsubmit="handleCreateEquipment(event)">
+                    <!-- Requirement 79: Photo & Document Upload on top of form for item awareness & preventing mistakes -->
+                    <div
+                        style="background:var(--tag-bg); padding:12px; border-radius:6px; border:1px solid var(--border); margin-bottom:14px;">
+                        <div
+                            style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                            <span>📸 Visual Item Verification & Media Upload</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; font-weight:600;">Photo Upload (Optional)</label>
+                                <input type="file" id="newToolPhoto" name="photo" accept="image/*" class="form-control"
+                                    style="font-size:0.75rem;" onchange="previewNewToolPhotoFile(this)">
+                                <div id="previewNewToolPhotoContainer" style="display:none; margin-top:6px;">
+                                    <img id="previewNewToolPhotoImg" src="" alt="Selected Photo"
+                                        style="max-height:85px; max-width:100%; border-radius:4px; border:1px solid var(--border); object-fit:contain; display:block;">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:0.8rem; font-weight:600;">Document Upload (Optional)</label>
+                                <input type="file" id="newToolDoc" name="document"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,image/*"
+                                    class="form-control" style="font-size:0.75rem;">
+                                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Manual, Spec,
+                                    PO, or Warranty (PDF, DOCX, etc.)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>General Equipment Name *</label>
+                            <input type="text" id="newToolName" name="name" list="historicalNamesDatalist"
+                                class="form-control" required placeholder="e.g. Oscilloscope, Printer, Drill"
+                                oninput="autoSuggestNewToolId()" onchange="autoSuggestNewToolId()">
+                        </div>
+                        <div class="form-group">
+                            <label>Tool ID <span
+                                    style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Auto if
+                                    blank)</span></label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="newToolId" name="id" class="form-control"
+                                    placeholder="e.g. IN-OSC-00001 (Auto if blank)">
+                                <button type="button" class="theme-toggle-btn"
+                                    style="padding:0 8px; font-size:0.75rem; white-space:nowrap;"
+                                    onclick="generateToolIdNow()" title="Auto generate Tool ID">✨ Auto</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="newToolCategory" name="category" class="form-control" required
+                                onchange="autoSuggestNewToolId()">
+                                <option value="Instrumentation">Instrumentation</option>
+                                <option value="Tools">Tools</option>
+                                <option value="Equipment">Equipment</option>
+                                <option value="Machinery">Machinery</option>
+                                <option value="Documentation">Documentation</option>
+                                <option value="Systems">Systems</option>
+                                <option value="Antennas">Antennas</option>
+                                <option value="Calibration">Calibration</option>
+                                <option value="Consumables">Consumables</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Brand *</label>
+                            <input type="text" id="newToolBrand" name="brand" class="form-control" required
+                                placeholder="e.g. HP, Rigol, Fluke, Makita">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Model *</label>
+                            <input type="text" id="newToolModel" name="model" class="form-control" required
+                                placeholder="e.g. DS1054Z">
+                        </div>
+                        <div class="form-group">
+                            <label>Type / Variant *</label>
+                            <input type="text" id="newToolType" name="tool_type" class="form-control" required
+                                placeholder="e.g. 4-Channel Digital Storage">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Serial Number (S/N) *</label>
+                            <input type="text" id="newToolSerial" name="serial_number" class="form-control" required
+                                placeholder="e.g. DS1ZA184200021">
+                        </div>
+                        <div class="form-group">
+                            <label>Belongs to Project / Program *</label>
+                            <input type="text" id="newToolProject" name="project" class="form-control" required
+                                list="allProjectsDatalist" value="Radar EW Facility Project"
+                                placeholder="e.g. Radar EW Facility Project">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Workshop Room / Location * (Dropdown)</label>
+                            <select id="newToolRoom" name="room_title" class="form-control" required>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Initial Procurement Expense (IDR)</label>
+                            <input type="text" inputmode="numeric" id="newToolPrice" name="price" class="form-control"
+                                value="0" placeholder="e.g. 7,500,000" oninput="formatNumberInput(this)">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Initial State Cycle *</label>
+                            <select id="newToolState" name="initial_state" class="form-control" required>
+                                <option value="New Purchase">New Purchase (Initial Inception)</option>
+                                <option value="Active">Active (Operational)</option>
+                                <option value="Transfer">Transfer</option>
+                                <option value="Maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Initial Condition *</label>
+                            <select id="newToolCondition" name="initial_condition" class="form-control" required>
+                                <option value="Brand New / Sealed">Brand New / Sealed</option>
+                                <option value="Good / Operational">Good / Operational</option>
+                                <option value="Calibrated & Certified">Calibrated & Certified</option>
+                                <option value="Fair / Minor Wear">Fair / Minor Wear</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Person In Charge (PIC) *</label>
+                            <input type="text" id="newToolPic" name="pic" class="form-control" required
+                                placeholder="e.g. Amina K.">
+                        </div>
+                        <div class="form-group">
+                            <label>Procurement Date *</label>
+                            <input type="text" id="newToolDate" name="date_time" class="form-control" required
+                                placeholder="YYYY-MM-DD HH:MM">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Purpose / Inception Notes</label>
+                        <input type="text" id="newToolPurpose" name="purpose" class="form-control"
+                            value="Initial equipment procurement and cataloging into repository">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeNewEquipmentModal()"
+                            class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" id="btnSubmitNewEquipment"
+                            style="flex:0 0 160px; background:#0969da;">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Download Report Per Periode (Req 61-64) -->
+    <div id="reportModal" class="modal">
+        <div class="modal-box" style="width:480px;">
+            <div class="modal-header">
+                <h3 style="font-size: 0.95rem;">📄 Download Laporan Dashboard Transaksi Per Periode</h3>
+                <button class="btn-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleGenerateReport(event)">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Periode Start (Tanggal) *</label>
+                            <input type="date" id="rptStartDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Periode Finish (Tanggal) *</label>
+                            <input type="date" id="rptFinishDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Lokasi</label>
+                        <select id="rptLocation" class="form-control">
+                            <option value="">Semua Lokasi / All Locations</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Project / Program</label>
+                        <select id="rptProject" class="form-control">
+                            <option value="">Semua Project / All Projects</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih PIC</label>
+                        <select id="rptPic" class="form-control">
+                            <option value="">Semua PIC / All PIC</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Kondisi</label>
+                        <select id="rptCondition" class="form-control">
+                            <option value="">Semua Kondisi / All Conditions</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Status / State</label>
+                        <select id="rptState" class="form-control">
+                            <option value="">Semua Status / All States</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+                        <button type="button" onclick="closeReportModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit"
+                            style="flex:0 0 120px; background:#1f883d;">Print</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Inventory Stock Opname -->
+    <div id="stockOpnameModal" class="modal">
+        <div class="modal-box"
+            style="width:1080px; max-width:96vw; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size: 0.95rem;">📋 Inventory Stock Opname (Audit & Current State Verification)</h3>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                        Validate physical presence, actual room location, operating state, and physical condition for
+                        each equipment.
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeStockOpnameModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <form id="stockOpnameForm" onsubmit="handleSaveStockOpname(event)">
+                    <!-- Upload checklist document (Req 66) on top -->
+                    <div class="form-group"
+                        style="background:var(--tag-bg); border:1px dashed var(--accent); padding:10px; border-radius:6px; margin-bottom:14px;">
+                        <label style="font-weight:bold; color:var(--text-main); display:block; margin-bottom:4px;">
+                            📄 Physical Checklist Document Upload (Optional) (PDF, DOCX, XLSX, Scanned image)
+                        </label>
+                        <input type="file" id="opnameDocFile" name="opname_document"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.zip"
+                            class="form-control" style="background:var(--bg-body);">
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px;">
+                            The signed checklist document will be permanently archived in the repository for audit
+                            records.
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                        <div class="form-group">
+                            <label>Opname Date & Time *</label>
+                            <input type="text" id="opnameDateTime" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Auditor / Inspector PIC *</label>
+                            <input type="text" id="opnamePic" class="form-control" required placeholder="e.g. Amina K.">
+                        </div>
+                    </div>
+
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <strong style="font-size:0.85rem;">Equipment Checklist (<span id="opnameCount">0</span>
+                                items)</strong>
+                            <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem;">
+                                <label style="color:var(--text-muted); font-weight:bold;">Filter by Room:</label>
+                                <select id="opnameLocationFilter" onchange="filterOpnameRows()" class="form-control"
+                                    style="padding:2px 8px; font-size:0.75rem; width:auto; margin-bottom:0;">
+                                    <option value="">All Locations</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; font-size:0.75rem;">
+                                <label style="color:var(--text-muted); font-weight:bold;">Filter by Project:</label>
+                                <select id="opnameProjectFilter" onchange="filterOpnameRows()" class="form-control"
+                                    style="padding:2px 8px; font-size:0.75rem; width:auto; margin-bottom:0;">
+                                    <option value="">All Projects / Programs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="theme-toggle-btn" style="padding:3px 10px; font-size:0.75rem;"
+                                onclick="toggleAllOpnameCheckboxes(true)">Check All</button>
+                            <button type="button" class="theme-toggle-btn" style="padding:3px 10px; font-size:0.75rem;"
+                                onclick="toggleAllOpnameCheckboxes(false)">Uncheck All</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="opname-table" style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px; text-align:center;">
+                                        <input type="checkbox" id="opnameMasterCheckbox"
+                                            title="Select / Deselect All Filtered"
+                                            onchange="toggleAllOpnameCheckboxes(this.checked)" style="cursor:pointer;">
+                                    </th>
+                                    <th style="width:85px;">Tool ID</th>
+                                    <th>Equipment Name & Details</th>
+                                    <th style="width:180px;">Validated Location</th>
+                                    <th style="width:130px;">Audit State</th>
+                                    <th style="width:180px;">Verified Condition</th>
+                                    <th style="width:180px;">Opname Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="opnameTableBody">
+                                <!-- Populated dynamically with current state of all tools -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div
+                        style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+                        <button type="button" onclick="closeStockOpnameModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" id="btnSaveOpname"
+                            style="flex:0 0 120px; background:#1f883d;">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret Admin Portal Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.9rem;">Administrator Portal Console</h3>
+                <button class="btn-close" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Login Username</label>
+                        <input type="text" id="loginUsername" class="form-control" required placeholder="admin">
+                    </div>
+                    <div class="form-group">
+                        <label>Login Password</label>
+                        <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeLoginModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" style="flex:0 0 90px;">Unlock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Superadmin Management Modal -->
+    <div id="superadminModal" class="modal">
+        <div class="modal-box" style="width:680px; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <h3 style="font-size:0.95rem;">Administrator Console</h3>
+                <button class="btn-close" onclick="closeSuperadminModal()">&times;</button>
+            </div>
+            <!-- Sub-tabs -->
+            <div
+                style="display:flex; border-bottom:1px solid var(--border); background:var(--bg-body); padding:0 12px; gap:8px;">
+                <button type="button" id="tabBtnSuperadminBrand" onclick="switchSuperadminTab('branding')"
+                    class="view-btn active"
+                    style="padding:8px 12px; border-bottom:2px solid var(--accent); border-radius:0; color:var(--text-main); font-weight:bold;">🎨
+                    Logo &amp; Branding</button>
+                <button type="button" id="tabBtnSuperadminRoom" onclick="switchSuperadminTab('room')" class="view-btn"
+                    style="padding:8px 12px; border-bottom:2px solid transparent; border-radius:0; color:var(--text-muted); font-weight:bold;">🏢
+                    Room &amp; Locations</button>
+                <button type="button" id="tabBtnSuperadminSig" onclick="switchSuperadminTab('sig')" class="view-btn"
+                    style="padding:8px 12px; border-bottom:2px solid transparent; border-radius:0; color:var(--text-muted); font-weight:bold;">📑
+                    A4 Signatures</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <!-- Tab 0: Brand & Logo -->
+                <div id="tabContentSuperadminBrand" style="display:block;">
+                    <form onsubmit="handleSaveBrandingModal(event)" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label style="font-weight:bold;">Application Header Name (Room Title) *</label>
+                            <input type="text" id="modalBrandRoomTitle" class="form-control" required
+                                placeholder="e.g. Radar EW Facility Workshop">
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Updates the header across all web
+                                pages and PDF reports.</small>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-weight:bold;">Organization / Group Title</label>
+                            <input type="text" id="modalBrandGroupTitle" class="form-control"
+                                placeholder="e.g. EW Instrumentation &amp; Maintenance Unit">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
+                            <!-- App Logo -->
+                            <div
+                                style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <label style="font-weight:bold; font-size:0.8rem; display:block; margin-bottom:6px;">🖥️
+                                    Web Apps Logo</label>
+                                <div id="modalPreviewAppLogo"
+                                    style="height:44px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px dashed var(--border); border-radius:4px;">
+                                </div>
+                                <input type="file" id="modalFileAppLogo" accept=".png,.jpg,.jpeg,.svg,.webp"
+                                    class="form-control" style="font-size:0.75rem; padding:3px; margin-bottom:6px;">
+                                <button type="button" onclick="handleModalResetLogo('app')" class="btn-small"
+                                    style="color:#cf222e; border-color:#cf222e; width:100%; font-size:0.75rem; padding:3px 6px;">Revert
+                                    App Logo</button>
+                            </div>
+                            <!-- Report Logo -->
+                            <div
+                                style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <label style="font-weight:bold; font-size:0.8rem; display:block; margin-bottom:6px;">📄
+                                    PDF Report Logo</label>
+                                <div id="modalPreviewReportLogo"
+                                    style="height:44px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px dashed var(--border); border-radius:4px;">
+                                </div>
+                                <input type="file" id="modalFileReportLogo" accept=".png,.jpg,.jpeg,.svg,.webp"
+                                    class="form-control" style="font-size:0.75rem; padding:3px; margin-bottom:6px;">
+                                <button type="button" onclick="handleModalResetLogo('report')" class="btn-small"
+                                    style="color:#cf222e; border-color:#cf222e; width:100%; font-size:0.75rem; padding:3px 6px;">Revert
+                                    Report Logo</button>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                            <a href="/console" target="_blank"
+                                style="font-size:0.8rem; color:var(--link-color); font-weight:bold; text-decoration:none;">Open
+                                Full Admin Console ↗</a>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" onclick="closeSuperadminModal()"
+                                    class="theme-toggle-btn">Cancel</button>
+                                <button type="submit" class="btn-submit" style="background:#0969da;">Save Brand &amp;
+                                    Logos</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 1: Room & Locations -->
+                <div id="tabContentSuperadminRoom" style="display:none;">
+                    <form onsubmit="saveSuperadminSettings(event)">
+                        <div class="form-group">
+                            <label>Workshop Room Title</label>
+                            <input type="text" id="settingRoomTitle" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Organization / Group Title</label>
+                            <input type="text" id="settingGroupTitle" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Workshop / Room State</label>
+                            <select id="settingRoomStatus" class="form-control">
+                                <option value="active">Active (Normal Logging)</option>
+                                <option value="paused">Paused (Transactions Frozen)</option>
+                            </select>
+                        </div>
+
+                        <!-- Requirement 75: Facility Locations Management (Only Superadmin) -->
+                        <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
+                        <div style="margin-bottom: 12px;">
+                            <label
+                                style="font-weight:bold; font-size:0.85rem; color:var(--text-main); display:block; margin-bottom:4px;">
+                                📍 Register New Facility Location (Superadmin Only)
+                            </label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="newAdminLocationInput" class="form-control"
+                                    placeholder="e.g. Anechoic Chamber 03" style="margin-bottom:0;">
+                                <button type="button" onclick="registerNewLocationAdmin()" class="btn-submit"
+                                    style="flex:0 0 140px; background:#1f883d;">Add</button>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label
+                                style="font-size:0.75rem; color:var(--text-muted); font-weight:bold; display:block; margin-bottom:4px;">Registered
+                                Facility Locations:</label>
+                            <div id="adminLocationsList"
+                                style="max-height:120px; overflow-y:auto; background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                                Loading locations...
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                            <button type="button" onclick="closeSuperadminModal()"
+                                class="theme-toggle-btn">Cancel</button>
+                            <button type="submit" class="btn-submit" style="flex:0 0 110px;">Save Room</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 2: A4 Report Signatories -->
+                <div id="tabContentSuperadminSig" style="display:none;">
+                    <div style="margin-bottom:12px; font-size:0.8rem; color:var(--text-muted);">
+                        Configure acknowledgement signatures (<strong>Dibuat, Diperiksa, Disetujui</strong>) for all
+                        <strong>A4 Vertical</strong> reports. Updates are recorded permanently in history.
+                    </div>
+                    <form onsubmit="handleSaveSignatoriesModal(event)">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+                            <div
+                                style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">1.
+                                    Dibuat</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDibuatTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / PIC Name</label>
+                                <input type="text" id="modalSigDibuatName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                            <div
+                                style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">2.
+                                    Diperiksa</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDiperiksaTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / Head Name</label>
+                                <input type="text" id="modalSigDiperiksaName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                            <div
+                                style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">3.
+                                    Disetujui</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDisetujuiTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / Head Name</label>
+                                <input type="text" id="modalSigDisetujuiName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-size:0.75rem;">Change Note / Historical Log Reason</label>
+                            <input type="text" id="modalSigNotes" class="form-control"
+                                placeholder="e.g. Changed Warehouse Head from John to Andre">
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                            <a href="/console" target="_blank"
+                                style="color:#0969da; text-decoration:none; font-weight:bold; font-size:0.8rem;">Open
+                                Full Console Page ↗</a>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" onclick="closeSuperadminModal()"
+                                    class="theme-toggle-btn">Cancel</button>
+                                <button type="submit" class="btn-submit"
+                                    style="flex:0 0 160px; background:#1f883d;">Save Signatures</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Historical Signatories in Modal -->
+                    <div style="margin-top:16px; border-top:1px dashed var(--border); padding-top:12px;">
+                        <div style="font-weight:bold; font-size:0.82rem; margin-bottom:6px; color:var(--text-main);">📜
+                            Signatures Historical Log:</div>
+                        <div id="modalSigHistoryList"
+                            style="max-height:140px; overflow-y:auto; background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.75rem;">
+                            Loading history...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requirements 64, 76, 77: Bottom-left action buttons -->
+    <div class="bottom-left-actions">
+        <button class="btn-bottom-action" onclick="openReportModal()" title="Report">Report</button>
+        <button class="btn-bottom-action btn-opname" onclick="downloadCurrentStateOpname()"
+            style="background:#dafbe1; color:#1a7f37; border-color:#2da44e;"
+            title="Download Stock Opname Checklist">Download</button>
+        <button class="btn-bottom-action btn-opname" onclick="openStockOpnameModal()"
+            style="background:#ddf4ff; color:#0969da; border-color:#54aeff;"
+            title="Upload and Update Stock Opname">Opname</button>
+    </div>
+
+    <!-- Requirement 28: Secret lower portal on bottom right: "🔒 Portal", small and transparent -->
+    <button id="secretLowerPortal" class="secret-lower-portal" onclick="openLoginModal()" title="Portal">Portal</button>
+
+    <!-- Global Registered Projects / Programs Datalist -->
+    <datalist id="allProjectsDatalist"></datalist>
+
+    <script>
+        let currentAuthRole = localStorage.getItem('auth-role') || null;
+        let toolsCatalog = [];
+        let allTransactions = [];
+        let totalCount = 0;
+        let offset = 0;
+        const limit = 50;
+        let isLoading = false;
+        let hasMore = true;
+        let searchDebounceTimeout = null;
+        let currentSortOrder = 'desc';
+
+        const TERMINAL_STATES_LIST = [
+            "Dispose", "Sell", "Lost", "Damage", "Broken", "Junk", "Donated", "Scrapped", "Retired"
+        ];
+
+
+        let facilityLocations = [];
+
+        async function loadLocations() {
+            try {
+                const res = await fetch('/api/locations');
+                facilityLocations = await res.json();
+
+                // Populate all location dropdowns across the application (Req 75 & 4.1)
+                populateDropdown('headerLocationFilter', facilityLocations, 'All Locations / Rooms');
+                populateDropdown('locationFilterSelect', facilityLocations, 'All Locations');
+                populateDropdown('newToolRoom', facilityLocations, '-- Select Location --');
+                populateDropdown('formNewToolRoom', facilityLocations, '-- Select Initial Location --');
+                populateDropdown('opnameLocation', facilityLocations, '-- Select Location --');
+                populateDropdown('rptLocation', facilityLocations, 'Semua Lokasi / All Locations');
+
+                // Move Location in sidebar
+                const moveSel = document.getElementById('formMoveLocation');
+                if (moveSel) {
+                    moveSel.innerHTML = '<option value="">-- Keep Current Location --</option>';
+                    facilityLocations.forEach(loc => {
+                        const opt = document.createElement('option');
+                        opt.value = loc;
+                        opt.innerText = loc;
+                        moveSel.appendChild(opt);
+                    });
+                }
+
+                // Render Superadmin locations list
+                renderAdminLocationsList();
+            } catch (err) {
+                console.error("Error loading facility locations", err);
+            }
+        }
+
+        function handleHeaderLocationChange() {
+            const hLoc = document.getElementById('headerLocationFilter').value;
+            const tLoc = document.getElementById('locationFilterSelect');
+            if (tLoc) tLoc.value = hLoc;
+            const badge = document.getElementById('badgeRoom');
+            if (badge) {
+                badge.innerText = hLoc ? `📍 ${hLoc}` : 'All Rooms';
+            }
+            loadTransactions(true);
+        }
+
+        function syncToolbarLocationToHeader() {
+            const tLoc = document.getElementById('locationFilterSelect').value;
+            const hLoc = document.getElementById('headerLocationFilter');
+            if (hLoc) hLoc.value = tLoc;
+            const badge = document.getElementById('badgeRoom');
+            if (badge) {
+                badge.innerText = tLoc ? `📍 ${tLoc}` : 'All Rooms';
+            }
+            loadTransactions(true);
+        }
+
+        function applyHeaderHierarchyFilter() {
+            loadTransactions(true);
+        }
+
+        function renderAdminLocationsList() {
+            const container = document.getElementById('adminLocationsList');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!facilityLocations || facilityLocations.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-muted);">No locations registered.</span>';
+                return;
+            }
+            facilityLocations.forEach(loc => {
+                const div = document.createElement('div');
+                div.style = "display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border-subtle);";
+                div.innerHTML = `
+                    <span>📍 <strong>${loc}</strong></span>
+                    ${currentAuthRole === 'superadmin' ? `
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" onclick="renameLocationAdmin('${loc}')" class="btn-action-small" style="padding:2px 8px; font-size:0.75rem;">Rename</button>
+                        <button type="button" onclick="deleteLocationAdmin('${loc}')" class="btn-delete" style="padding:2px 8px; font-size:0.75rem;">Delete</button>
+                    </div>` : ''}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function registerNewLocationAdmin() {
+            if (currentAuthRole !== 'superadmin') {
+                alert("Only Superadmin can register new facility locations.");
+                return;
+            }
+            const input = document.getElementById('newAdminLocationInput');
+            const locName = input.value.trim();
+            if (!locName) {
+                alert("Please enter a location name.");
+                return;
+            }
+            const fd = new FormData();
+            fd.append('name', locName);
+            fd.append('role', 'superadmin');
+
+            try {
+                const res = await fetch('/api/locations', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok) {
+                    input.value = '';
+                    alert(data.message || "Location registered successfully!");
+                    await loadLocations();
+                    await loadFilterOptions();
+                } else {
+                    alert("Error: " + (data.detail || "Failed to register location."));
+                }
+            } catch (err) {
+                alert("Failed to add location: " + err.message);
+            }
+        }
+
+        async function renameLocationAdmin(locName) {
+            if (currentAuthRole !== 'superadmin') return;
+            const newName = prompt(`Enter new name for location "${locName}":`, locName);
+            if (!newName || !newName.trim() || newName.trim() === locName) return;
+
+            try {
+                const fd = new FormData();
+                fd.append('new_name', newName.trim());
+                fd.append('role', 'superadmin');
+
+                const res = await fetch(`/api/locations/${encodeURIComponent(locName)}`, {
+                    method: 'PUT',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Location renamed successfully!");
+                    await loadLocations();
+                    await loadFilterOptions();
+                    await loadTools();
+                } else {
+                    alert("Error: " + (data.detail || "Failed to rename location."));
+                }
+            } catch (err) {
+                alert("Error renaming location: " + err.message);
+            }
+        }
+
+
+        async function deleteLogAdmin(id) {
+            if (currentAuthRole !== 'superadmin') return;
+            if (!confirm(`Are you sure you want to delete transaction log #${id}?`)) return;
+            try {
+                const res = await fetch(`/api/transactions/${id}?role=superadmin`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadTransactions(true);
+                    loadCurrentInventory();
+                } else {
+                    alert("Failed to delete transaction log.");
+                }
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function deleteLocationAdmin(locName) {
+            if (currentAuthRole !== 'superadmin') return;
+            if (!confirm(`Are you sure you want to remove location '${locName}'?`)) return;
+            try {
+                const res = await fetch(`/api/locations/${encodeURIComponent(locName)}?role=superadmin`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadLocations();
+                    await loadFilterOptions();
+                } else {
+                    alert("Failed to delete location.");
+                }
+            } catch (err) {
+                alert("Error deleting location: " + err.message);
+            }
+        }
+
+        function downloadCurrentStateOpname() {
+            // Requirement 76: Download Stock Opname Current State
+            window.open('/opname/print-checklist', '_blank');
+        }
+
+        window.onload = async () => {
+            await loadLocations();
+            initTheme();
+            updateAuthUI();
+            await loadSettings();
+            await loadFilterOptions();
+            await loadTools();
+            loadTransactions(true);
+            if (new URLSearchParams(window.location.search).get('console') === '1') {
+                openSuperadminSettings();
+            }
+        };
+
+        function initTheme() {
+            const saved = localStorage.getItem('inventory-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeButton(saved);
+        }
+
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = (cur === 'light') ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('inventory-theme', next);
+            updateThemeButton(next);
+        }
+
+        function updateThemeButton(theme) {
+            const btn = document.getElementById('themeToggleBtn');
+            btn.innerHTML = 'Theme';
+        }
+
+        function updateAuthUI() {
+            const pill = document.getElementById('authStatusPill');
+            const logoutBtn = document.getElementById('btnLogout');
+            const superBanner = document.getElementById('superadminBanner');
+            const userName = localStorage.getItem('auth-user-name');
+
+            if (currentAuthRole === 'superadmin') {
+                pill.innerText = '🛡️ Superadmin';
+                pill.style.borderColor = '#9e6a03';
+                pill.style.color = '#d29922';
+                logoutBtn.style.display = 'inline-block';
+                logoutBtn.innerText = 'Logout';
+                superBanner.style.display = 'flex';
+            } else if (currentAuthRole === 'admin') {
+                pill.innerText = '🔑 Admin (Editor)';
+                pill.style.borderColor = '#0969da';
+                pill.style.color = '#0969da';
+                logoutBtn.style.display = 'inline-block';
+                logoutBtn.innerText = 'Logout';
+                superBanner.style.display = 'none';
+            } else if (currentAuthRole === 'user') {
+                pill.innerText = `👤 ${userName || 'Operator'}`;
+                pill.style.borderColor = '#1a7f37';
+                pill.style.color = '#1a7f37';
+                logoutBtn.style.display = 'inline-block';
+                logoutBtn.innerText = 'Logout';
+                superBanner.style.display = 'none';
+            } else {
+                pill.innerText = 'Guest View';
+                pill.style.borderColor = 'var(--border)';
+                pill.style.color = 'var(--text-muted)';
+                logoutBtn.style.display = 'inline-block';
+                logoutBtn.innerText = 'Portal';
+                superBanner.style.display = 'none';
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const s = await res.json();
+                document.getElementById('mainRoomHeading').innerText = s.room_title || 'Facility Workshop';
+                document.getElementById('activeRoomDisplay').innerText = `Room: ${s.room_title || '-'}`;
+                document.getElementById('activeGroupDisplay').innerText = `Group: ${s.group_title || '-'}`;
+
+                if (s.app_logo_url) {
+                    const lBox = document.getElementById('appLogoContainer');
+                    if (lBox) lBox.innerHTML = `<img src="${s.app_logo_url}" alt="App Logo" style="height:32px; width:auto; max-width:48px; border-radius:6px; vertical-align:middle; object-fit:contain;">`;
+                }
+
+                const isPaused = (s.room_status === 'paused');
+                const badge = document.getElementById('roomStatusBadge');
+                badge.innerText = isPaused ? '⏸ Paused' : '● Active';
+                badge.className = `status-pill ${isPaused ? 'status-paused' : 'status-active'}`;
+
+                const btnPause = document.getElementById('btnPauseRoom');
+                btnPause.innerText = isPaused ? 'Resume' : 'Pause';
+                btnPause.style.color = isPaused ? '#1a7f37' : '#cf222e';
+            } catch (err) {
+                console.error("Error loading settings", err);
+            }
+        }
+
+        let cachedFacilityLocations = [];
+
+        async function loadFilterOptions() {
+            try {
+                const res = await fetch('/api/filter-options');
+                const data = await res.json();
+                cachedFacilityLocations = data.locations || [];
+
+                populateDropdown('locationFilterSelect', data.locations, 'All Locations');
+                populateDropdown('projectFilterSelect', data.projects || data.programs, 'All Projects / Programs');
+                populateDropdown('equipmentFilterSelect', data.equipments, 'All Equipment');
+                populateDropdown('picFilterSelect', data.pics, 'All PIC');
+                populateDropdown('conditionFilterSelect', data.conditions, 'All Conditions');
+                populateDropdown('stateFilterSelect', data.states, 'All States');
+
+                // Form project filter
+                populateDropdown('formProjectFilter', data.projects || data.programs, 'All Projects / Programs');
+
+                // Report modal dropdowns
+                populateDropdown('rptLocation', data.locations, 'Semua Lokasi / All Locations');
+                populateDropdown('rptProject', data.projects || data.programs, 'Semua Project / All Projects');
+                populateDropdown('rptPic', data.pics, 'Semua PIC / All PIC');
+                populateDropdown('rptCondition', data.conditions, 'Semua Kondisi / All Conditions');
+                populateDropdown('rptState', data.states, 'Semua Status / All States');
+
+                // Datalist for project inputs across forms
+                const projDatalist = document.getElementById('allProjectsDatalist');
+                if (projDatalist) {
+                    projDatalist.innerHTML = '';
+                    (data.projects || data.programs || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        projDatalist.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading filter options", err);
+            }
+        }
+
+        function populateDropdown(selectId, items, placeholder) {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            const curVal = sel.value;
+            sel.innerHTML = `<option value="">${placeholder}</option>`;
+            (items || []).forEach(it => {
+                if (!it) return;
+                const opt = document.createElement('option');
+                opt.value = it;
+                opt.innerText = it;
+                sel.appendChild(opt);
+            });
+            if (curVal) sel.value = curVal;
+        }
+
+        async function loadTools() {
+            try {
+                const res = await fetch('/api/tools');
+                toolsCatalog = await res.json();
+
+                populateHistoricalDatalists();
+
+                const formSelect = document.getElementById('formToolId');
+                formSelect.innerHTML = '<option value="">-- Choose Equipment --</option><option value="NEW">+ [Register New Equipment / Tool]</option>';
+                toolsCatalog.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = `${t.name} [${t.id}] - ${t.brand} ${t.model} (S/N: ${t.serial_number})`;
+                    formSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error loading tools catalog", err);
+            }
+        }
+
+        function toTitleCase(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/(?:^|\s|-)\S/g, function (a) { return a.toUpperCase(); });
+        }
+
+        const STANDARD_EQUIPMENT_PRACTICE_NAMES = [
+            // Electronic Test & RF Measurement
+            "Oscilloscope", "Digital Storage Oscilloscope", "Mixed Signal Oscilloscope",
+            "Spectrum Analyzer", "Vector Network Analyzer", "Network Analyzer",
+            "Signal Generator", "RF Signal Generator", "Function Generator", "Arbitrary Waveform Generator",
+            "Digital Multimeter", "Benchtop Multimeter", "Handheld Multimeter",
+            "DC Power Supply", "Triple Output Power Supply", "High Voltage Power Supply", "AC Power Source",
+            "Programmable Electronic Load", "Frequency Counter / Timer", "Logic Analyzer",
+            "LCR Meter / Component Bridge", "RF Power Meter & Sensor", "Noise Figure Analyzer",
+            "Modulation Analyzer", "Audio Analyzer", "Optical Power Meter", "Optical Spectrum Analyzer",
+            "Time Domain Reflectometer (TDR)", "Antenna Analyzer", "Impedance Analyzer",
+            "Semiconductor Curve Tracer", "Differential Probe", "High Voltage Probe", "Current Probe",
+            "RF Near-Field Probe Set", "Horn Antenna", "Log-Periodic Antenna", "Biconical Antenna",
+            "RF Power Amplifier", "RF Step Attenuator", "Coaxial Directional Coupler", "Frequency Synthesizer",
+
+            // Soldering, Desoldering & Assembly
+            "Soldering Station", "Temperature-Controlled Soldering Station", "Hot Air Rework Station",
+            "Desoldering Station", "SMD Infrared Preheater", "Ultrasonic Cleaner",
+            "Solder Fume Extractor", "Benchtop Reflow Oven", "Manual Pick and Place Machine",
+            "Semi-Automatic SMT Stencil Printer", "Microscope Soldering Station", "PCB Hot Plate Preheater",
+            "Pneumatic Solder Paste Dispenser", "Wire Stripping Machine", "Automatic Cable Tester",
+            "Soldering Iron Tip Cleaner / Polisher",
+
+            // Prototyping, Fabrication & CNC
+            "3D Printer (FDM)", "3D Printer (SLA/Resin)", "3D Prototyper", "CNC Milling Machine",
+            "PCB CNC Router / Engraver", "Laser Engraver & Cutter", "Laser Cutter",
+            "Sheet Metal Bending Brake", "Benchtop Shear / Guillotine", "Spot Welder",
+            "Battery Pack Welder", "Heat Press Machine", "Mini Benchtop Drill Press",
+            "Rotary Tool (Dremel)", "Benchtop Belt & Disc Sander", "Vinyl / Film Cutter Plotter",
+
+            // Workshop Hand & Mechanical Tools
+            "Cordless Impact Drill", "Cordless Screwdriver", "Electric Screwdriver with Torque Control",
+            "Bench Grinder", "Angle Grinder", "Bench Vise", "Swivel Precision Vise",
+            "Torque Screwdriver", "Torque Wrench Set", "Digital Caliper", "Vernier Caliper",
+            "Digital Micrometer", "Dial Indicator with Magnetic Base", "Wire Crimper Tool",
+            "Ratchet Terminal Crimper", "Diagonal Cutting Pliers", "Long Nose Pliers",
+            "Precision Flush Cutters", "Precision Wire Stripper", "Automatic Wire Stripper",
+            "Cable Tie Tensioning Gun", "Deburring Tool", "Tap and Die Set",
+            "Hex Key Allen Wrench Set", "Torx Screwdriver Set", "Precision Electronics Screwdriver Set",
+            "Heat Gun", "Hot Melt Glue Gun", "Label Printer", "Industrial Barcode Scanner",
+
+            // Optical & Inspection Equipment
+            "Stereo Inspection Microscope", "Digital Video Microscope with HDMI",
+            "Thermal Imaging Camera", "Handheld Infrared Thermometer",
+            "Endoscope / Borescope Inspection Camera", "Magnifying Inspection Lamp",
+            "UV LED Inspection Lamp", "Digital Lux Meter", "Surface Roughness Tester", "Coating Thickness Gauge",
+
+            // Facility, Safety & ESD Equipment
+            "ESD Surface Resistivity Meter", "ESD Wrist Strap & Footwear Tester",
+            "Dehumidifier Electronic Dry Cabinet", "Benchtop Fume Hood",
+            "Air Compressor with Air Filter Regulator", "Rotary Vane Vacuum Pump",
+            "Hazardous Chemical Storage Cabinet", "Eyewash Station", "Portable CO2 Fire Extinguisher",
+            "Cleanroom HEPA Air Purifier"
+        ];
+
+        function populateHistoricalDatalists() {
+            // Equipment Names datalist (Req 61: Historical + Practice Catalog)
+            const namesDatalist = document.getElementById('historicalNamesDatalist');
+            if (namesDatalist) {
+                const dbNames = (toolsCatalog || []).map(t => t.name).filter(Boolean);
+                const combined = [...new Set([...dbNames, ...STANDARD_EQUIPMENT_PRACTICE_NAMES])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                namesDatalist.innerHTML = '';
+                combined.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n;
+                    namesDatalist.appendChild(opt);
+                });
+            }
+
+            // Locations datalist (Req 60)
+            const locDatalist = document.getElementById('locationOptionsList');
+            if (locDatalist && toolsCatalog) {
+                const uniqueLocs = [...new Set(toolsCatalog.map(t => t.room_title).filter(Boolean))].sort();
+                locDatalist.innerHTML = '';
+                uniqueLocs.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l;
+                    locDatalist.appendChild(opt);
+                });
+            }
+        }
+
+        function handleFormProjectFilterChange() {
+            const selectedProj = document.getElementById('formProjectFilter').value;
+            const formSelect = document.getElementById('formToolId');
+            const curVal = formSelect.value;
+            formSelect.innerHTML = '<option value="">-- Choose Equipment --</option><option value="NEW">+ [Register New Equipment / Tool]</option>';
+
+            let filteredTools = toolsCatalog;
+            if (selectedProj) {
+                filteredTools = toolsCatalog.filter(t => (t.project || '') === selectedProj);
+            }
+            filteredTools.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.innerText = `${t.name} [${t.id}] - ${t.brand} ${t.model} (S/N: ${t.serial_number})`;
+                formSelect.appendChild(opt);
+            });
+
+            // Update historical names datalist to filtered tools plus catalog
+            const namesDatalist = document.getElementById('historicalNamesDatalist');
+            if (namesDatalist) {
+                const dbNames = filteredTools.map(t => t.name).filter(Boolean);
+                const combined = [...new Set([...dbNames, ...STANDARD_EQUIPMENT_PRACTICE_NAMES])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+                namesDatalist.innerHTML = '';
+                combined.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n;
+                    namesDatalist.appendChild(opt);
+                });
+            }
+
+            if (curVal && filteredTools.some(t => t.id === curVal)) {
+                formSelect.value = curVal;
+            } else {
+                formSelect.value = '';
+            }
+            handleToolSelectionChange();
+        }
+
+        function handleEquipmentNameInput() {
+            const rawName = document.getElementById('formEquipmentName').value;
+            const cleanName = rawName.trim().toLowerCase();
+            const formSelect = document.getElementById('formToolId');
+            formSelect.innerHTML = '';
+
+            const matchingTools = toolsCatalog.filter(t => t.name.toLowerCase() === cleanName);
+
+            // Add option to register new tool with this name (Req 59, 61)
+            const newOpt = document.createElement('option');
+            newOpt.value = 'NEW';
+            newOpt.innerText = `+ [Register New Equipment / Tool: ${toTitleCase(rawName) || 'New Item'}]`;
+            formSelect.appendChild(newOpt);
+
+            if (matchingTools.length > 0) {
+                matchingTools.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.innerText = `${t.name} [${t.id}] - ${t.brand} ${t.model} (S/N: ${t.serial_number})`;
+                    formSelect.appendChild(opt);
+                });
+                // Default to first matching tool
+                formSelect.value = matchingTools[0].id;
+            } else {
+                formSelect.value = 'NEW';
+            }
+
+            handleToolSelectionChange();
+        }
+
+        function handleEquipmentNameBlur() {
+            const nameInput = document.getElementById('formEquipmentName');
+            if (nameInput.value) {
+                nameInput.value = toTitleCase(nameInput.value.trim());
+            }
+            autoSuggestInlineToolId();
+        }
+
+        function handleToolSelectionChange() {
+            const toolId = document.getElementById('formToolId').value;
+            const inlineSection = document.getElementById('inlineNewEquipmentSection');
+            const specsBox = document.getElementById('selectedToolSpecs');
+            const roomSelect = document.getElementById('formNewToolRoom');
+
+            if (toolId === 'NEW') {
+                inlineSection.style.display = 'block';
+                specsBox.style.display = 'none';
+                if (roomSelect) roomSelect.required = true;
+                autoSuggestInlineToolId();
+            } else {
+                inlineSection.style.display = 'none';
+                specsBox.style.display = 'block';
+                if (roomSelect) roomSelect.required = false;
+                const tool = toolsCatalog.find(x => x.id === toolId);
+                if (tool) {
+                    document.getElementById('formEquipmentName').value = tool.name;
+                }
+            }
+            updateSelectedToolInfo();
+        }
+
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === '' || isNaN(num)) return "0";
+            const n = Number(num);
+            if (Number.isInteger(n)) {
+                return n.toLocaleString('en-US');
+            }
+            return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function formatIDR(num) {
+            if (num === null || num === undefined || isNaN(num)) return "0";
+            return Math.round(Number(num)).toLocaleString('en-US');
+        }
+
+        function formatNumberInput(el, allowDecimal = false) {
+            const raw = el.value;
+            const selStart = el.selectionStart;
+            const digitsBeforeCursor = raw.slice(0, selStart).replace(/[^0-9]/g, '').length;
+
+            let clean = raw.replace(/,/g, '');
+            if (allowDecimal) {
+                clean = clean.replace(/[^0-9.]/g, '');
+                const parts = clean.split('.');
+                if (parts.length > 2) {
+                    clean = parts[0] + '.' + parts.slice(1).join('');
+                }
+                if (clean === '') {
+                    el.value = '';
+                    return;
+                }
+                const splitted = clean.split('.');
+                const intFormatted = splitted[0] ? Number(splitted[0]).toLocaleString('en-US') : '0';
+                el.value = splitted.length > 1 ? intFormatted + '.' + splitted[1] : intFormatted;
+            } else {
+                clean = clean.replace(/[^0-9]/g, '');
+                if (clean === '') {
+                    el.value = '';
+                    return;
+                }
+                el.value = Number(clean).toLocaleString('en-US');
+            }
+
+            let newCursor = 0;
+            let countedDigits = 0;
+            for (let i = 0; i < el.value.length; i++) {
+                if (/[0-9]/.test(el.value[i])) {
+                    countedDigits++;
+                }
+                if (countedDigits === digitsBeforeCursor) {
+                    newCursor = i + 1;
+                    break;
+                }
+            }
+            if (countedDigits < digitsBeforeCursor) {
+                newCursor = el.value.length;
+            }
+            if (el.setSelectionRange) {
+                el.setSelectionRange(newCursor, newCursor);
+            }
+        }
+
+        function resetAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('locationFilterSelect').value = '';
+            if (document.getElementById('projectFilterSelect')) document.getElementById('projectFilterSelect').value = '';
+            document.getElementById('equipmentFilterSelect').value = '';
+            document.getElementById('picFilterSelect').value = '';
+            document.getElementById('conditionFilterSelect').value = '';
+            document.getElementById('stateFilterSelect').value = '';
+            currentSortOrder = 'desc';
+            document.getElementById('sortIndicator').innerText = '▼';
+            loadTransactions(true);
+        }
+
+        async function loadTransactions(reset = false) {
+            if (reset) {
+                offset = 0;
+                allTransactions = [];
+                hasMore = true;
+                document.getElementById('transactionTableBody').innerHTML = '';
+            }
+            if (!hasMore || isLoading) return;
+
+            isLoading = true;
+            document.getElementById('infiniteLoader').style.display = 'block';
+
+            const searchVal = document.getElementById('searchInput').value.trim();
+            const locVal = document.getElementById('locationFilterSelect').value;
+            const projVal = document.getElementById('projectFilterSelect') ? document.getElementById('projectFilterSelect').value : '';
+            const equipVal = document.getElementById('equipmentFilterSelect').value;
+            const picVal = document.getElementById('picFilterSelect').value;
+            const condVal = document.getElementById('conditionFilterSelect').value;
+            const stateVal = document.getElementById('stateFilterSelect').value;
+
+            let url = `/api/transactions?offset=${offset}&limit=${limit}&sort_order=${currentSortOrder}`;
+            if (searchVal) url += `&search=${encodeURIComponent(searchVal)}`;
+            if (locVal) url += `&location_filter=${encodeURIComponent(locVal)}`;
+            if (projVal) url += `&project_filter=${encodeURIComponent(projVal)}`;
+            if (equipVal) url += `&tool_filter=${encodeURIComponent(equipVal)}`;
+            if (picVal) url += `&pic_filter=${encodeURIComponent(picVal)}`;
+            if (condVal) url += `&condition_filter=${encodeURIComponent(condVal)}`;
+            if (stateVal) url += `&state_filter=${encodeURIComponent(stateVal)}`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+
+                totalCount = data.total;
+                document.getElementById('totalLogs').innerText = totalCount.toLocaleString();
+
+                const allExp = Number(data.all_expenses || 0);
+                const subExp = Number(data.total_expenses || 0);
+
+                document.getElementById('totalExpensesDisplay').innerText = formatIDR(allExp);
+                const subEl = document.getElementById('subtotalExpensesDisplay');
+                if (subEl) subEl.innerText = formatIDR(subExp);
+
+                const pct = (allExp > 0) ? ((subExp / allExp) * 100).toFixed(1) : "0.0";
+                const pctEl = document.getElementById('expensePctDisplay');
+                if (pctEl) {
+                    pctEl.innerText = `${pct}%`;
+                    pctEl.title = `Subtotal ${formatIDR(subExp)} IDR of Total ${formatIDR(allExp)} IDR (${pct}%)`;
+                }
+
+                if (data.items.length === 0) {
+                    hasMore = false;
+                } else {
+                    allTransactions.push(...data.items);
+                    offset += data.items.length;
+                    renderRows(data.items);
+                    if (offset >= totalCount) hasMore = false;
+                }
+                document.getElementById('loadedCount').innerText = allTransactions.length.toLocaleString();
+            } catch (err) {
+                console.error("Error fetching transactions", err);
+            } finally {
+                isLoading = false;
+                document.getElementById('infiniteLoader').style.display = 'none';
+            }
+        }
+
+        function renderRows(items) {
+            const tbody = document.getElementById('transactionTableBody');
+
+            items.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.onclick = (e) => {
+                    if (e.target.closest('.tool-name-link')) return;
+                    if (e.target.tagName.toLowerCase() === 'a' || e.target.tagName.toLowerCase() === 'img') return;
+                    openEditTransactionForm(t);
+                };
+
+                const isCurrent = t.is_current === 1;
+                const dateClass = isCurrent ? 'date-current' : 'date-earlier';
+                const stateClass = isCurrent ? 'state-current' : 'state-past';
+
+                const hoverPhoto = t.equipment_photo || t.photo_path || `/repository/${t.tool_id}/photos/default_equipment.svg`;
+                const priceFormatted = formatIDR(t.price);
+
+                const docDisplay = t.doc_path ?
+                    `<a href="${t.doc_path}" target="_blank" class="file-link" title="Open ${t.doc_path.split('/').pop()}" style="font-size:1.25rem; text-decoration:none;">📄</a>` :
+                    '<span style="color:var(--text-muted);">-</span>';
+
+                const rowNum = tbody.children.length + 1;
+                const adminActionCell = (currentAuthRole === 'superadmin') ?
+                    `<div style="display:flex; gap:4px; justify-content:center; align-items:center;">
+                        <button type="button" onclick="event.stopPropagation(); openNewTransactionForTool('${t.tool_id}')" class="btn-action-small" style="padding:2px 8px; font-size:0.75rem; background:var(--accent); color:#fff; border-color:var(--accent);" title="Log New Transaction for this item">Log</button>
+                        <button type="button" onclick="event.stopPropagation(); deleteLogAdmin(${t.id})" class="btn-delete" style="padding:2px 8px; font-size:0.75rem;">Delete</button>
+                     </div>` :
+                    `<button type="button" onclick="event.stopPropagation(); openNewTransactionForTool('${t.tool_id}')" class="btn-action-small" style="padding:2px 8px; font-size:0.75rem; background:var(--accent); color:#fff; border-color:var(--accent);" title="Log New Transaction for this item">Log</button>`;
+
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: bold; color: var(--text-muted);">${rowNum}</td>
+                    <td><span class="${dateClass}">${t.date_time}</span></td>
+                    <td>
+                        <a href="/detail/${t.tool_id}" class="tool-name-link"
+                           onmouseenter="showFloatingTooltip(event, '${t.tool_name}', '${t.brand}', '${t.model}', '${t.tool_type}', '${t.serial_number}', '${t.project || 'Radar EW Project'}', '${t.room_title || 'Workshop'}', '${hoverPhoto}')"
+                           onmousemove="moveFloatingTooltip(event)"
+                           onmouseleave="hideFloatingTooltip()"
+                           title="Click to view full detail page & historical repository">
+                            ${t.tool_name}
+                        </a>
+                    </td>
+                    <td><span style="font-size:0.8rem; color:var(--text-muted);">${t.tool_id}</span></td>
+                    <td><span class="${stateClass}">${t.state || 'Active'}</span></td>
+                    <td>${t.condition}</td>
+                    <td><span style="font-size:0.8rem; color:var(--accent); font-weight:600;">📍 ${t.room_title || 'Workshop'}</span></td>
+                    <td style="text-align: right; font-weight: bold;">${priceFormatted}</td>
+                    <td><strong>${t.pic}</strong></td>
+                    <td class="col-purpose">${t.purpose}</td>
+                    <td style="text-align: center;">
+                        ${t.photo_path ? `<a href="${t.photo_path}" target="_blank"><img src="${t.photo_path}" alt="Photo" style="width:42px; height:30px; object-fit:cover; border-radius:3px; border:1px solid var(--border); display:inline-block; vertical-align:middle;"></a>` : '<span style="color:var(--text-muted);">-</span>'}
+                    </td>
+                    <td style="text-align: center;">${docDisplay}</td>
+                    <td style="text-align: center;">${adminActionCell}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function showFloatingTooltip(e, name, brand, model, type, serial, project, location, photo) {
+            const tt = document.getElementById('floatingTooltip');
+            document.getElementById('ftPhoto').src = photo || '';
+            document.getElementById('ftTitle').innerHTML = `<span>${name}</span><span style="font-size:0.7rem; color:var(--link-color);">Click for Detail ↗</span>`;
+            document.getElementById('ftBrand').innerText = brand;
+            document.getElementById('ftModel').innerText = model;
+            document.getElementById('ftType').innerText = type;
+            document.getElementById('ftSerial').innerText = serial;
+            document.getElementById('ftProject').innerText = project;
+            document.getElementById('ftLocation').innerText = location;
+
+            tt.style.display = 'block';
+            moveFloatingTooltip(e);
+        }
+
+        function moveFloatingTooltip(e) {
+            const tt = document.getElementById('floatingTooltip');
+            let x = e.clientX + 16;
+            let y = e.clientY + 16;
+            if (x + 330 > window.innerWidth) x = e.clientX - 335;
+            if (y + 360 > window.innerHeight) y = window.innerHeight - 365;
+            if (y < 10) y = 10;
+            tt.style.left = x + 'px';
+            tt.style.top = y + 'px';
+        }
+
+        function hideFloatingTooltip() {
+            document.getElementById('floatingTooltip').style.display = 'none';
+        }
+
+        function toggleDateSort() {
+            currentSortOrder = (currentSortOrder === 'desc') ? 'asc' : 'desc';
+            document.getElementById('sortIndicator').innerText = (currentSortOrder === 'desc') ? '▼' : '▲';
+            loadTransactions(true);
+        }
+
+        function applyFilters() {
+            loadTransactions(true);
+        }
+
+        function handleScroll() {
+            const container = document.getElementById('tableContainer');
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 60) {
+                if (hasMore && !isLoading) {
+                    loadTransactions(false);
+                }
+            }
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchDebounceTimeout);
+            searchDebounceTimeout = setTimeout(() => {
+                loadTransactions(true);
+            }, 300);
+        }
+
+        // Sidebar on the LEFT
+        function previewFormPhotoFile(input) {
+            const container = document.getElementById('previewFormPhotoContainer');
+            const img = document.getElementById('previewFormPhotoImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    container.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                img.src = '';
+                container.style.display = 'none';
+            }
+        }
+
+        function previewNewToolPhotoFile(input) {
+            const container = document.getElementById('previewNewToolPhotoContainer');
+            const img = document.getElementById('previewNewToolPhotoImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    container.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                img.src = '';
+                container.style.display = 'none';
+            }
+        }
+
+        function getLocalDateTimeString() {
+            const now = new Date();
+            const Y = now.getFullYear();
+            const M = String(now.getMonth() + 1).padStart(2, '0');
+            const D = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            return `${Y}-${M}-${D} ${h}:${m}`;
+        }
+
+        function convertEditToNewTransaction() {
+            const toolId = document.getElementById('formToolId').value;
+            openNewTransactionForTool(toolId);
+        }
+
+        function openNewTransactionForTool(toolId) {
+            openNewTransactionForm();
+            if (toolId) {
+                const formSelect = document.getElementById('formToolId');
+                if (formSelect) {
+                    formSelect.value = toolId;
+                    handleToolSelectionChange();
+                }
+            }
+        }
+
+        function openNewTransactionForm() {
+            document.getElementById('sidebarTitle').innerText = 'Log New Transaction';
+            document.getElementById('transId').value = '';
+
+            document.getElementById('formDateTime').value = getLocalDateTimeString();
+            document.getElementById('formPic').value = '';
+            document.getElementById('formPurpose').value = '';
+            document.getElementById('formCondition').value = 'Good / Operational';
+            document.getElementById('formPrice').value = '0';
+            document.getElementById('formState').value = 'Active';
+            document.getElementById('formToolId').value = '';
+            document.getElementById('formEquipmentName').value = '';
+            document.getElementById('formMoveLocation').value = '';
+            document.getElementById('inlineNewEquipmentSection').style.display = 'none';
+            document.getElementById('selectedToolSpecs').style.display = 'block';
+            document.getElementById('formIsCurrent').checked = false;
+            document.getElementById('formPhoto').value = '';
+            document.getElementById('formDoc').value = '';
+            document.getElementById('existingPhoto').innerHTML = '';
+            document.getElementById('existingDoc').innerHTML = '';
+            const pCont = document.getElementById('previewFormPhotoContainer');
+            if (pCont) pCont.style.display = 'none';
+            const pImg = document.getElementById('previewFormPhotoImg');
+            if (pImg) pImg.src = '';
+            document.getElementById('btnDeleteForm').style.display = 'none';
+            document.getElementById('sidebarGuestEditNotice').style.display = 'none';
+
+            const roomSelect = document.getElementById('formNewToolRoom');
+            if (roomSelect) roomSelect.required = false;
+
+            enableFormInputs(true);
+            updateSelectedToolInfo();
+            openSidebar();
+        }
+
+        function openEditTransactionForm(t) {
+            document.getElementById('sidebarTitle').innerText = 'Transaction Details #' + t.id;
+            document.getElementById('transId').value = t.id;
+            document.getElementById('formDateTime').value = t.date_time;
+            document.getElementById('formPic').value = t.pic;
+            document.getElementById('formPurpose').value = t.purpose;
+            document.getElementById('formCondition').value = t.condition;
+            document.getElementById('formPrice').value = formatIDR(t.price || 0);
+            document.getElementById('formState').value = t.state || 'Active';
+            if (document.getElementById('formProjectFilter')) {
+                document.getElementById('formProjectFilter').value = t.project || '';
+                handleFormProjectFilterChange();
+            }
+            document.getElementById('formToolId').value = t.tool_id;
+            document.getElementById('formIsCurrent').checked = (t.is_current === 1);
+            document.getElementById('formPhoto').value = '';
+            document.getElementById('formDoc').value = '';
+            const pCont = document.getElementById('previewFormPhotoContainer');
+            if (pCont) pCont.style.display = 'none';
+            const pImg = document.getElementById('previewFormPhotoImg');
+            if (pImg) pImg.src = '';
+
+            const hasCustomPhoto = t.photo_path && !t.photo_path.endsWith('default_equipment.svg');
+            document.getElementById('existingPhoto').innerHTML = hasCustomPhoto ?
+                `<div style="margin-top:4px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <a href="${t.photo_path}" target="_blank" class="file-link">View Current Photo</a>
+                        ${canEdit ? `<button type="button" onclick="deleteCurrentLogPhoto(${t.id})" class="btn-action" style="background:#cf222e; padding:2px 8px; font-size:0.75rem;">🗑️ Delete Image</button>` : ''}
+                    </div>
+                    <img src="${t.photo_path}" alt="Current Photo" style="max-height:90px; max-width:100%; border-radius:4px; margin-top:4px; border:1px solid var(--border); object-fit:contain; display:block;">
+                 </div>` : (t.photo_path ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Default placeholder image</div>` : '');
+
+            document.getElementById('existingDoc').innerHTML = t.doc_path ?
+                `<div style="margin-top:4px; display:flex; align-items:center; gap:8px;">
+                    <a href="${t.doc_path}" target="_blank" class="file-link">📄 View Current Document</a>
+                    ${canEdit ? `<button type="button" onclick="deleteCurrentLogDoc(${t.id})" class="btn-action" style="background:#cf222e; padding:2px 8px; font-size:0.75rem;">🗑️ Delete Doc</button>` : ''}
+                 </div>` : '';
+
+            const canEdit = (currentAuthRole === 'admin' || currentAuthRole === 'superadmin');
+            if (canEdit) {
+                document.getElementById('btnDeleteForm').style.display = 'inline-block';
+                document.getElementById('sidebarGuestEditNotice').style.display = 'none';
+                enableFormInputs(true);
+            } else {
+                document.getElementById('btnDeleteForm').style.display = 'none';
+                document.getElementById('sidebarGuestEditNotice').style.display = 'block';
+                enableFormInputs(false);
+            }
+
+            updateSelectedToolInfo();
+            openSidebar();
+        }
+
+        function enableFormInputs(enabled) {
+            const inputs = ['formDateTime', 'formToolId', 'formEquipmentName', 'formProjectFilter', 'formMoveLocation', 'formState', 'formPrice', 'formCondition', 'formPic', 'formPurpose', 'formPhoto', 'formDoc', 'formIsCurrent'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !enabled;
+            });
+            const subBtn = document.getElementById('btnSubmitForm');
+            if (subBtn) {
+                subBtn.style.display = enabled ? 'block' : 'none';
+                if (enabled) subBtn.disabled = false;
+            }
+        }
+
+        function updateSelectedToolInfo() {
+            const toolId = document.getElementById('formToolId').value;
+            const tool = toolsCatalog.find(x => x.id === toolId);
+            const warnBox = document.getElementById('sidebarTerminalWarning');
+            const submitBtn = document.getElementById('btnSubmitForm');
+            const overrideBox = document.getElementById('superadminOverrideBox');
+
+            if (tool) {
+                document.getElementById('previewBrandModel').innerText = `${tool.brand} - ${tool.model}`;
+                document.getElementById('previewTypeSerial').innerText = `${tool.tool_type} (S/N: ${tool.serial_number})`;
+                document.getElementById('previewLocation').innerText = tool.room_title || 'Workshop';
+                document.getElementById('previewProject').innerText = tool.project || 'Radar EW Facility Project';
+                document.getElementById('previewCurrentState').innerText = tool.current_state || 'Active';
+
+                // Asset visual awareness: Show equipment reference photo at top of form if not editing an existing transaction
+                const transIdVal = document.getElementById('transId').value;
+                const photoInput = document.getElementById('formPhoto');
+                if (!transIdVal && (!photoInput.files || photoInput.files.length === 0)) {
+                    if (tool.photo_path) {
+                        document.getElementById('existingPhoto').innerHTML = `
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+                                📷 <strong>Current Asset Reference Photo:</strong><br>
+                                <img src="${tool.photo_path}" alt="Asset Photo" style="max-height:90px; max-width:100%; border-radius:4px; margin-top:3px; border:1px solid var(--border); object-fit:contain; display:block;">
+                                <a href="${tool.photo_path}" target="_blank" class="file-link" style="font-size:0.72rem;">View full image ↗</a>
+                            </div>`;
+                    } else {
+                        document.getElementById('existingPhoto').innerHTML = '';
+                    }
+                }
+
+                const isTerminal = tool.is_terminal || TERMINAL_STATES_LIST.includes(tool.current_state);
+                if (isTerminal) {
+                    warnBox.style.display = 'block';
+                    warnBox.innerText = `⚠️ Notice: Equipment [${tool.id}] has reached terminal state (${tool.current_state}). Further operations are locked.`;
+
+                    if (currentAuthRole === 'superadmin') {
+                        overrideBox.style.display = 'block';
+                        submitBtn.disabled = false;
+                    } else {
+                        overrideBox.style.display = 'none';
+                        submitBtn.disabled = true;
+                    }
+                } else {
+                    warnBox.style.display = 'none';
+                    overrideBox.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            } else {
+                document.getElementById('previewBrandModel').innerText = '-';
+                document.getElementById('previewTypeSerial').innerText = '-';
+                document.getElementById('previewLocation').innerText = '-';
+                document.getElementById('previewProject').innerText = '-';
+                document.getElementById('previewCurrentState').innerText = '-';
+                warnBox.style.display = 'none';
+                overrideBox.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        async function saveTransaction(e) {
+            e.preventDefault();
+            const transId = document.getElementById('transId').value;
+            const formEl = document.getElementById('transactionForm');
+            const formData = new FormData(formEl);
+            formData.set('is_current', document.getElementById('formIsCurrent').checked ? 1 : 0);
+            formData.set('price', (document.getElementById('formPrice').value || '0').replace(/,/g, '') || '0');
+
+            // Auto Title Case Equipment Name (Req 61)
+            const eqNameInput = document.getElementById('formEquipmentName');
+            if (eqNameInput && eqNameInput.value) {
+                const titleCased = toTitleCase(eqNameInput.value.trim());
+                eqNameInput.value = titleCased;
+                formData.set('new_tool_name', titleCased);
+            }
+
+            const chosenToolId = document.getElementById('formToolId').value;
+            if (chosenToolId === 'NEW') {
+                formData.set('tool_id', 'NEW');
+                const newLoc = document.getElementById('formNewToolRoom').value;
+                if (!newLoc) {
+                    alert("Please select an Initial Location for the new equipment.");
+                    document.getElementById('formNewToolRoom').focus();
+                    return;
+                }
+            } else if (!chosenToolId) {
+                alert("Please select an equipment item to log.");
+                document.getElementById('formToolId').focus();
+                return;
+            }
+
+            const override = document.getElementById('formSuperadminOverride');
+            if (override && override.checked) {
+                formData.set('superadmin_override', 1);
+            }
+
+            try {
+                let res;
+                if (transId) {
+                    if (!currentAuthRole) {
+                        alert("Guest users can view and log new records. To edit existing records or change schedules/state, please authenticate via 🔒 Portal.");
+                        return;
+                    }
+                    formData.set('role', currentAuthRole || localStorage.getItem('auth-role') || 'superadmin');
+                    res = await fetch(`/api/transactions/${transId}`, {
+                        method: 'PUT',
+                        body: formData
+                    });
+                } else {
+                    formData.set('role', currentAuthRole || localStorage.getItem('auth-role') || 'guest');
+                    res = await fetch('/api/transactions', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+
+                const result = await res.json();
+                if (res.ok) {
+                    alert("Transaction logged successfully!");
+                    closeSidebar();
+                    await loadTools();
+                    await loadFilterOptions();
+                    loadTransactions(true);
+                } else {
+                    alert(result.detail || "Failed to save transaction.");
+                }
+            } catch (err) {
+                alert("Error submitting transaction: " + err.message);
+            }
+        }
+
+        async function confirmDeleteCurrent() {
+            const transId = document.getElementById('transId').value;
+            if (!confirm(`Are you sure you want to delete transaction log #${transId}?`)) return;
+
+            const effRole = currentAuthRole || localStorage.getItem('auth-role') || 'superadmin';
+            const res = await fetch(`/api/transactions/${transId}?role=${encodeURIComponent(effRole)}`, { method: 'DELETE' });
+            if (res.ok) {
+                closeSidebar();
+                await loadTools();
+                await loadFilterOptions();
+                loadTransactions(true);
+            } else {
+                const err = await res.json();
+                alert(err.detail || "Failed to delete record.");
+            }
+        }
+
+        async function deleteCurrentLogPhoto(txId) {
+            if (!confirm(`Are you sure you want to delete the image from transaction #${txId}?`)) return;
+            try {
+                const effRole = currentAuthRole || localStorage.getItem('auth-role') || 'superadmin';
+                const res = await fetch(`/api/transactions/${txId}/photo?role=${encodeURIComponent(effRole)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert("Image deleted successfully.");
+                    document.getElementById('existingPhoto').innerHTML = '<div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Image deleted. Reverted to default placeholder.</div>';
+                    await loadTools();
+                    loadTransactions(true);
+                } else {
+                    const d = await res.json();
+                    alert("Failed to delete image: " + (d.detail || ""));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        async function deleteCurrentLogDoc(txId) {
+            if (!confirm(`Are you sure you want to delete the document from transaction #${txId}?`)) return;
+            try {
+                const effRole = currentAuthRole || localStorage.getItem('auth-role') || 'superadmin';
+                const res = await fetch(`/api/transactions/${txId}/document?role=${encodeURIComponent(effRole)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    alert("Document removed successfully.");
+                    document.getElementById('existingDoc').innerHTML = '';
+                    await loadTools();
+                    loadTransactions(true);
+                } else {
+                    const d = await res.json();
+                    alert("Failed to delete document: " + (d.detail || ""));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // --- TOOL ID AUTO-GENERATION HELPERS (2-Digit Category + 3-Digit Name + 5-Digit Sequence) ---
+        const TOOL_CATEGORY_ACRONYMS = {
+            "INSTRUMENTATION": "IN",
+            "TOOLS": "TL",
+            "EQUIPMENT": "EQ",
+            "DOCUMENTATION": "DC",
+            "SYSTEMS": "SY",
+            "ANTENNAS": "AN",
+            "CALIBRATION": "CL",
+            "MACHINERY": "MC",
+            "CHEMICALS & SOLDERING": "CS",
+            "CHEMICALS": "CS",
+            "SOLDERING": "SL",
+            "TAPES & ADHESIVES": "TA",
+            "ADHESIVES": "TA",
+            "WIRING & SLEEVING": "WS",
+            "WIRING": "WS",
+            "SAFETY & PPE": "SF",
+            "SAFETY": "SF",
+            "HARDWARE & FASTENERS": "HF",
+            "HARDWARE": "HF",
+            "PROTOTYPING & MATERIALS": "PM",
+            "PROTOTYPING": "PR",
+            "RF CABLES": "RF",
+            "RF CONNECTORS": "RC",
+            "CABLES": "CB",
+            "CONSUMABLES": "CS"
+        };
+
+        const TOOL_NAME_ACRONYMS = {
+            "OSCILLOSCOPE": "OSC",
+            "DIGITAL STORAGE OSCILLOSCOPE": "OSC",
+            "MIXED SIGNAL OSCILLOSCOPE": "MSO",
+            "SPECTRUM ANALYZER": "SPE",
+            "SIGNAL GENERATOR": "GEN",
+            "RF SIGNAL GENERATOR": "RFG",
+            "FUNCTION GENERATOR": "FGN",
+            "ARBITRARY WAVEFORM GENERATOR": "AWG",
+            "VECTOR NETWORK ANALYZER": "VNA",
+            "NETWORK ANALYZER": "VNA",
+            "MULTIMETER": "MLT",
+            "DIGITAL MULTIMETER": "DMM",
+            "BENCHTOP MULTIMETER": "DMM",
+            "POWER SUPPLY": "PWR",
+            "DC POWER SUPPLY": "PWR",
+            "AC POWER SOURCE": "ACP",
+            "ELECTRONIC LOAD": "ELD",
+            "FREQUENCY COUNTER": "FQC",
+            "LOGIC ANALYZER": "LOG",
+            "LCR METER": "LCR",
+            "POWER METER": "PWM",
+            "RF POWER METER": "PWM",
+            "NOISE FIGURE METER": "NFM",
+            "AUDIO ANALYZER": "AUD",
+            "OPTICAL POWER METER": "OPM",
+            "OPTICAL SPECTRUM ANALYZER": "OSA",
+            "ANTENNA ANALYZER": "ANA",
+            "HORN ANTENNA": "HRN",
+            "ANTENNA": "ANT",
+            "JAMMER": "JMR",
+            "DIFFERENTIAL PROBE": "PRB",
+            "HIGH VOLTAGE PROBE": "HVP",
+            "CURRENT PROBE": "CPR",
+            "NEAR-FIELD PROBE": "NFP",
+            "SOLDERING STATION": "SLD",
+            "REWORK STATION": "REW",
+            "HOT AIR REWORK STATION": "HAR",
+            "DESOLDERING STATION": "DSD",
+            "INFRARED PREHEATER": "PRE",
+            "ULTRASONIC CLEANER": "USC",
+            "FUME EXTRACTOR": "FUM",
+            "REFLOW OVEN": "OVN",
+            "PICK AND PLACE MACHINE": "PNP",
+            "PCB STENCIL PRINTER": "STN",
+            "3D PRINTER": "3DP",
+            "3D PRINTER (FDM)": "3DP",
+            "3D PRINTER (SLA/RESIN)": "3DP",
+            "3D PROTOTYPER": "3DP",
+            "CNC MILLING MACHINE": "CNC",
+            "PCB MILLING MACHINE": "PCM",
+            "LASER ENGRAVER & CUTTER": "LSR",
+            "LASER CUTTER": "LCU",
+            "SPOT WELDER": "WLD",
+            "HEAT PRESS MACHINE": "HPM",
+            "DRILL PRESS": "DLP",
+            "ROTARY TOOL": "ROT",
+            "DRILL": "DRL",
+            "IMPACT DRILL": "DRL",
+            "HAMMER DRILL": "DRL",
+            "CORDLESS SCREWDRIVER": "SCD",
+            "PRECISION SCREWDRIVER SET": "SCD",
+            "BENCH GRINDER": "BGD",
+            "ANGLE GRINDER": "AGD",
+            "BENCH VISE": "VIS",
+            "TORQUE WRENCH": "TRQ",
+            "TORQUE WRENCH SET": "TRQ",
+            "DIGITAL CALIPER": "CLP",
+            "CALIPER": "CLP",
+            "DIGITAL MICROMETER": "MIC",
+            "WIRE CRIMPER": "CRM",
+            "DIAGONAL CUTTERS": "CUT",
+            "WIRE STRIPPER": "STP",
+            "HEX KEY ALLEN WRENCH SET": "ALN",
+            "HEAT GUN": "HTG",
+            "PRINTER": "PRN",
+            "LABEL PRINTER": "LBL",
+            "BARCODE SCANNER": "BCS",
+            "STEREO MICROSCOPE": "MIC",
+            "INSPECTION MICROSCOPE": "MIC",
+            "DIGITAL MICROSCOPE": "MIC",
+            "THERMAL CAMERA": "THM",
+            "THERMAL IMAGING CAMERA": "THM",
+            "BORESCOPE": "BOR"
+        };
+
+        function computeCategoryAcronym(cat) {
+            const cleaned = (cat || '').trim().toUpperCase();
+            if (TOOL_CATEGORY_ACRONYMS[cleaned]) return TOOL_CATEGORY_ACRONYMS[cleaned];
+            for (const [k, v] of Object.entries(TOOL_CATEGORY_ACRONYMS)) {
+                if (cleaned.includes(k) || k.includes(cleaned)) return v;
+            }
+            const words = cleaned.split(/[\s&/,\_-]+/).filter(Boolean);
+            if (words.length >= 2) {
+                return (words[0][0] + words[1][0]).toUpperCase();
+            } else if (words.length === 1 && words[0].length >= 2) {
+                return words[0].slice(0, 2).toUpperCase();
+            }
+            return "EQ";
+        }
+
+        function computeNameAcronym(name) {
+            const cleaned = (name || '').trim().toUpperCase();
+            if (TOOL_NAME_ACRONYMS[cleaned]) return TOOL_NAME_ACRONYMS[cleaned];
+            let bestKey = null;
+            let bestVal = null;
+            for (const [k, v] of Object.entries(TOOL_NAME_ACRONYMS)) {
+                if (cleaned.includes(k)) {
+                    if (!bestKey || k.length > bestKey.length) {
+                        bestKey = k;
+                        bestVal = v;
+                    }
+                }
+            }
+            if (bestVal) return bestVal;
+
+            const stopWords = new Set(['AND', 'THE', 'OF', 'FOR', 'WITH', 'IN', 'TO']);
+            const words = cleaned.split(/[\s&/,\_-]+/).filter(w => w && !stopWords.has(w));
+            if (words.length >= 3) {
+                return (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
+            } else if (words.length === 2) {
+                const w1 = words[0];
+                const w2 = words[1];
+                const c2 = w2.length >= 2 ? w2.slice(0, 2) : (w2 + 'X').slice(0, 2);
+                return (w1[0] + c2).toUpperCase();
+            } else if (words.length === 1) {
+                const w = words[0];
+                if (w.length >= 3) return w.slice(0, 3).toUpperCase();
+                return (w + 'XXX').slice(0, 3).toUpperCase();
+            }
+            return "GEN";
+        }
+
+        function getNextToolId(name, category) {
+            const catCode = computeCategoryAcronym(category || 'Instrumentation');
+            const nameCode = computeNameAcronym(name || 'Equipment');
+            const prefix = `${catCode}-${nameCode}-`;
+
+            let maxSeq = 0;
+            const existing = (toolsCatalog || []).map(t => (t.id || '').toUpperCase().trim());
+            for (const eid of existing) {
+                if (eid.startsWith(prefix)) {
+                    const suffix = eid.slice(prefix.length);
+                    const m = suffix.match(/^(\d+)/);
+                    if (m) {
+                        const val = parseInt(m[1], 10);
+                        if (val > maxSeq) maxSeq = val;
+                    }
+                } else if (eid.includes(`-${nameCode}-`)) {
+                    const parts = eid.split(`-${nameCode}-`);
+                    if (parts.length === 2) {
+                        const m = parts[1].match(/^(\d+)/);
+                        if (m) {
+                            const val = parseInt(m[1], 10);
+                            if (val > maxSeq) maxSeq = val;
+                        }
+                    }
+                }
+            }
+
+            const nextSeq = maxSeq + 1;
+            return `${catCode}-${nameCode}-${String(nextSeq).padStart(5, '0')}`;
+        }
+
+        function autoSuggestNewToolId() {
+            const name = document.getElementById('newToolName').value;
+            const cat = document.getElementById('newToolCategory') ? document.getElementById('newToolCategory').value : 'Instrumentation';
+            const idInput = document.getElementById('newToolId');
+            if (!idInput) return;
+            const suggested = getNextToolId(name, cat);
+            idInput.placeholder = `${suggested} (Auto if blank)`;
+        }
+
+        function generateToolIdNow() {
+            const name = document.getElementById('newToolName').value;
+            const cat = document.getElementById('newToolCategory') ? document.getElementById('newToolCategory').value : 'Instrumentation';
+            const idInput = document.getElementById('newToolId');
+            if (!idInput) return;
+            idInput.value = getNextToolId(name, cat);
+        }
+
+        function autoSuggestInlineToolId() {
+            const name = document.getElementById('formEquipmentName') ? document.getElementById('formEquipmentName').value : '';
+            const cat = document.getElementById('formNewToolCategory') ? document.getElementById('formNewToolCategory').value : 'Tools';
+            const idInput = document.getElementById('formNewToolId');
+            if (!idInput) return;
+            const suggested = getNextToolId(name, cat);
+            idInput.placeholder = `${suggested} (Auto if blank)`;
+        }
+
+        function generateInlineToolIdNow() {
+            const name = document.getElementById('formEquipmentName') ? document.getElementById('formEquipmentName').value : '';
+            const cat = document.getElementById('formNewToolCategory') ? document.getElementById('formNewToolCategory').value : 'Tools';
+            const idInput = document.getElementById('formNewToolId');
+            if (!idInput) return;
+            idInput.value = getNextToolId(name, cat);
+        }
+
+        // --- NEW EQUIPMENT MODAL HANDLERS ---
+        function openNewEquipmentModal() {
+            const now = new Date();
+            const formatted = now.toISOString().slice(0, 16).replace('T', ' ');
+            document.getElementById('newToolDate').value = formatted;
+            const idInput = document.getElementById('newToolId');
+            idInput.value = '';
+            document.getElementById('newToolName').value = '';
+            document.getElementById('newToolBrand').value = '';
+            document.getElementById('newToolModel').value = '';
+            document.getElementById('newToolType').value = '';
+            document.getElementById('newToolSerial').value = '';
+            document.getElementById('newToolPrice').value = '0';
+            document.getElementById('newToolPic').value = '';
+            document.getElementById('newToolPhoto').value = '';
+            document.getElementById('newToolDoc').value = '';
+            const ntp = document.getElementById('previewNewToolPhotoContainer');
+            if (ntp) ntp.style.display = 'none';
+            autoSuggestNewToolId();
+            const ntpi = document.getElementById('previewNewToolPhotoImg');
+            if (ntpi) ntpi.src = '';
+            document.getElementById('newEquipmentModal').classList.add('open');
+        }
+
+        function closeNewEquipmentModal() {
+            document.getElementById('newEquipmentModal').classList.remove('open');
+            const ntp = document.getElementById('previewNewToolPhotoContainer');
+            if (ntp) ntp.style.display = 'none';
+            const ntpi = document.getElementById('previewNewToolPhotoImg');
+            if (ntpi) ntpi.src = '';
+        }
+
+        async function handleCreateEquipment(e) {
+            e.preventDefault();
+            const formEl = document.getElementById('newEquipmentForm');
+            const fd = new FormData(formEl);
+            fd.set('price', (document.getElementById('newToolPrice').value || '0').replace(/,/g, '') || '0');
+
+            try {
+                const res = await fetch('/api/tools', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Equipment registered successfully!");
+                    closeNewEquipmentModal();
+                    await loadTools();
+                    await loadFilterOptions();
+                    loadTransactions(true);
+                } else {
+                    alert("Registration failed: " + (data.detail || "Error creating tool"));
+                }
+            } catch (err) {
+                alert("Submission error: " + err.message);
+            }
+        }
+
+        // --- REPORT PERIODE MODAL (Req 61-64) ---
+        function openReportModal() {
+            const today = new Date();
+            const pastMonth = new Date(today);
+            pastMonth.setDate(today.getDate() - 30);
+
+            document.getElementById('rptStartDate').value = pastMonth.toISOString().slice(0, 10);
+            document.getElementById('rptFinishDate').value = today.toISOString().slice(0, 10);
+            document.getElementById('reportModal').classList.add('open');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.remove('open');
+        }
+
+        function handleGenerateReport(e) {
+            e.preventDefault();
+            const sDate = document.getElementById('rptStartDate').value;
+            const fDate = document.getElementById('rptFinishDate').value;
+            const loc = document.getElementById('rptLocation').value;
+            const proj = document.getElementById('rptProject') ? document.getElementById('rptProject').value : '';
+            const pic = document.getElementById('rptPic').value;
+            const cond = document.getElementById('rptCondition').value;
+            const st = document.getElementById('rptState').value;
+
+            let url = `/report/print?start_date=${encodeURIComponent(sDate)}&finish_date=${encodeURIComponent(fDate)}`;
+            if (loc) url += `&location=${encodeURIComponent(loc)}`;
+            if (proj) url += `&project=${encodeURIComponent(proj)}`;
+            if (pic) url += `&pic=${encodeURIComponent(pic)}`;
+            if (cond) url += `&condition=${encodeURIComponent(cond)}`;
+            if (st) url += `&state=${encodeURIComponent(st)}`;
+
+            window.open(url, '_blank');
+            closeReportModal();
+        }
+
+        // --- STOCK OPNAME AUDIT (Per-Item Location, State & Condition Verification) ---
+        const OPNAME_STATES = [
+            "Active", "Borrow", "Maintenance", "Repair", "Transfer",
+            "Damage", "Broken", "Lost", "Junk", "Donated", "Sell", "Scrapped", "Retired", "Dispose"
+        ];
+
+        const OPNAME_CONDITIONS = [
+            "Good / Operational",
+            "Calibrated & Certified",
+            "Brand New / Sealed",
+            "Fair / Minor Wear",
+            "Needs Cleaning / Consumables",
+            "Needs Calibration / Maintenance",
+            "Under Repair",
+            "Damaged / Degraded",
+            "Broken / Inoperable",
+            "Missing / Lost",
+            "Decommissioned / Disposed"
+        ];
+
+        async function openStockOpnameModal() {
+            document.getElementById('opnameDateTime').value = getLocalDateTimeString();
+            document.getElementById('opnamePic').value = '';
+            document.getElementById('opnameDocFile').value = '';
+
+            try {
+                // Ensure facility locations are loaded
+                if (!cachedFacilityLocations || cachedFacilityLocations.length === 0) {
+                    const fRes = await fetch('/api/filter-options');
+                    const fData = await fRes.json();
+                    cachedFacilityLocations = fData.locations || [];
+                }
+
+                const res = await fetch('/api/tools/current-inventory');
+                const tools = await res.json();
+                document.getElementById('opnameCount').innerText = tools.length;
+
+                // Collect distinct locations & projects
+                const locSet = new Set(cachedFacilityLocations);
+                const projSet = new Set();
+                tools.forEach(t => {
+                    if (t.room_title) locSet.add(t.room_title);
+                    if (t.project) projSet.add(t.project);
+                });
+                const allLocs = [...locSet].sort();
+                const allProjs = [...projSet].sort();
+
+                // Populate location filter dropdown on top of table
+                const locFilterSel = document.getElementById('opnameLocationFilter');
+                if (locFilterSel) {
+                    locFilterSel.innerHTML = '<option value="">All Locations</option>';
+                    allLocs.forEach(l => {
+                        const opt = document.createElement('option');
+                        opt.value = l;
+                        opt.innerText = l;
+                        locFilterSel.appendChild(opt);
+                    });
+                    locFilterSel.value = '';
+                }
+
+                // Populate project filter dropdown on top of table
+                const projFilterSel = document.getElementById('opnameProjectFilter');
+                if (projFilterSel) {
+                    projFilterSel.innerHTML = '<option value="">All Projects / Programs</option>';
+                    allProjs.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.innerText = p;
+                        projFilterSel.appendChild(opt);
+                    });
+                    projFilterSel.value = '';
+                }
+
+                const tbody = document.getElementById('opnameTableBody');
+                tbody.innerHTML = '';
+
+                tools.forEach((t, idx) => {
+                    const tr = document.createElement('tr');
+                    const toolLoc = t.room_title || 'Radar EW Facility Workshop A';
+                    const toolProj = t.project || 'Radar EW Facility Project';
+                    const curState = t.current_state || 'Active';
+                    const curCond = t.current_condition || 'Good / Operational';
+                    tr.setAttribute('data-location', toolLoc.toLowerCase());
+                    tr.setAttribute('data-project', toolProj.toLowerCase());
+                    tr.setAttribute('data-orig-loc', toolLoc);
+                    tr.setAttribute('data-orig-state', curState);
+                    tr.setAttribute('data-orig-cond', curCond);
+                    tr.setAttribute('data-orig-note', 'Physical presence verified');
+
+                    // Location options
+                    let locOptionsHtml = '';
+                    allLocs.forEach(l => {
+                        const sel = (l === toolLoc) ? 'selected' : '';
+                        locOptionsHtml += `<option value="${l}" ${sel}>${l}</option>`;
+                    });
+
+                    // State options
+                    let stateOptionsHtml = '';
+                    OPNAME_STATES.forEach(s => {
+                        const sel = (s.toLowerCase() === curState.toLowerCase()) ? 'selected' : '';
+                        stateOptionsHtml += `<option value="${s}" ${sel}>${s}</option>`;
+                    });
+
+                    // Condition options
+                    let condOptionsHtml = '';
+                    OPNAME_CONDITIONS.forEach(c => {
+                        const sel = (curCond.includes(c) || c.includes(curCond) || curCond === c) ? 'selected' : '';
+                        condOptionsHtml += `<option value="${c}" ${sel}>${c}</option>`;
+                    });
+
+                    tr.innerHTML = `
+                        <td style="text-align:center;">
+                            <input type="checkbox" class="opname-chk" data-tid="${t.id}" onchange="handleOpnameRowCheck(this)" style="cursor:pointer;">
+                        </td>
+                        <td><strong>${t.id}</strong></td>
+                        <td>
+                            <strong>${t.name}</strong><br>
+                            <small style="color:var(--text-muted);">${t.brand} ${t.model} • S/N: ${t.serial_number}</small><br>
+                            <span style="font-size:0.7rem; color:var(--link-color); font-weight:600;">📁 ${toolProj}</span>
+                        </td>
+                        <td>
+                            <select class="form-control opname-loc" onchange="handleOpnameRowInputChange(this)" style="padding:4px; font-size:0.75rem; margin-bottom:0;">
+                                ${locOptionsHtml}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control opname-state" onchange="handleOpnameRowInputChange(this)" style="padding:4px; font-size:0.75rem; margin-bottom:0; font-weight:600;">
+                                ${stateOptionsHtml}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control opname-cond" onchange="handleOpnameRowInputChange(this)" style="padding:4px; font-size:0.75rem; margin-bottom:0;">
+                                ${condOptionsHtml}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control opname-note" placeholder="Physical check verified" style="padding:4px; font-size:0.75rem; margin-bottom:0;" value="Physical presence verified" oninput="handleOpnameRowInputChange(this)">
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const masterChk = document.getElementById('opnameMasterCheckbox');
+                if (masterChk) masterChk.checked = false;
+
+                document.getElementById('stockOpnameModal').classList.add('open');
+            } catch (err) {
+                alert("Error loading current inventory for stock opname: " + err.message);
+            }
+        }
+
+        function handleOpnameRowInputChange(el) {
+            const tr = el.closest('tr');
+            if (!tr) return;
+            const chk = tr.querySelector('.opname-chk');
+            if (chk) chk.checked = true;
+            tr.style.background = 'rgba(31, 136, 61, 0.08)';
+            if (el.classList.contains('opname-loc')) {
+                tr.setAttribute('data-location', (el.value || '').toLowerCase());
+            }
+            handleOpnameRowCheck();
+        }
+
+        function handleOpnameRowLocChange(sel) {
+            handleOpnameRowInputChange(sel);
+        }
+
+        function filterOpnameRows() {
+            const filterLoc = (document.getElementById('opnameLocationFilter').value || '').toLowerCase();
+            const filterProj = (document.getElementById('opnameProjectFilter') ? document.getElementById('opnameProjectFilter').value : '').toLowerCase();
+            const rows = document.querySelectorAll('#opnameTableBody tr');
+            let visibleCount = 0;
+            rows.forEach(tr => {
+                const rowLoc = (tr.getAttribute('data-location') || '').toLowerCase();
+                const rowProj = (tr.getAttribute('data-project') || '').toLowerCase();
+                const matchLoc = !filterLoc || rowLoc === filterLoc;
+                const matchProj = !filterProj || rowProj === filterProj;
+                if (matchLoc && matchProj) {
+                    tr.style.display = '';
+                    visibleCount++;
+                } else {
+                    tr.style.display = 'none';
+                }
+            });
+            document.getElementById('opnameCount').innerText = visibleCount;
+            handleOpnameRowCheck();
+        }
+
+        function closeStockOpnameModal() {
+            document.getElementById('stockOpnameModal').classList.remove('open');
+        }
+
+        function toggleAllOpnameCheckboxes(checked) {
+            const masterChk = document.getElementById('opnameMasterCheckbox');
+            if (masterChk) masterChk.checked = checked;
+            document.querySelectorAll('#opnameTableBody tr').forEach(tr => {
+                if (tr.style.display !== 'none') {
+                    const chk = tr.querySelector('.opname-chk');
+                    if (chk) chk.checked = checked;
+                    tr.style.background = checked ? 'rgba(31, 136, 61, 0.08)' : '';
+                }
+            });
+        }
+
+        function handleOpnameRowCheck() {
+            const masterChk = document.getElementById('opnameMasterCheckbox');
+            if (!masterChk) return;
+            const visibleChks = Array.from(document.querySelectorAll('#opnameTableBody tr'))
+                .filter(tr => tr.style.display !== 'none')
+                .map(tr => tr.querySelector('.opname-chk'))
+                .filter(Boolean);
+            masterChk.checked = visibleChks.length > 0 && visibleChks.every(c => c.checked);
+        }
+
+        async function handleSaveStockOpname(e) {
+            e.preventDefault();
+            const docInput = document.getElementById('opnameDocFile');
+            const hasDoc = (docInput.files && docInput.files.length > 0);
+
+            const items = [];
+            document.querySelectorAll('#opnameTableBody tr').forEach(tr => {
+                const chk = tr.querySelector('.opname-chk');
+                const loc = tr.querySelector('.opname-loc');
+                const state = tr.querySelector('.opname-state');
+                const cond = tr.querySelector('.opname-cond');
+                const note = tr.querySelector('.opname-note');
+
+                const curLoc = loc ? loc.value : '';
+                const curState = state ? state.value : 'Active';
+                const curCond = cond ? cond.value : 'Good / Operational';
+                const curNote = note ? note.value.trim() : '';
+
+                const origLoc = tr.getAttribute('data-orig-loc') || '';
+                const origState = tr.getAttribute('data-orig-state') || '';
+                const origCond = tr.getAttribute('data-orig-cond') || '';
+                const origNote = tr.getAttribute('data-orig-note') || '';
+
+                const isModified = (curLoc !== origLoc || curState !== origState || curCond !== origCond || curNote !== origNote);
+                const isChecked = chk && chk.checked;
+
+                if (isChecked || isModified) {
+                    items.push({
+                        tool_id: chk.getAttribute('data-tid'),
+                        verified: true,
+                        modified: isModified,
+                        location: curLoc,
+                        state: curState,
+                        condition: curCond,
+                        notes: curNote || 'Physical Opname verified'
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                alert("Please check or modify at least one equipment item to save Stock Opname audit.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('date_time', document.getElementById('opnameDateTime').value);
+            fd.append('pic', document.getElementById('opnamePic').value);
+            if (hasDoc) {
+                fd.append('opname_document', docInput.files[0]);
+            }
+            fd.append('items_json', JSON.stringify(items));
+
+            try {
+                const res = await fetch('/api/stock-opname', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Stock Opname saved successfully!");
+                    closeStockOpnameModal();
+                    await loadTools();
+                    await loadFilterOptions();
+                    loadTransactions(true);
+                } else {
+                    alert("Opname error: " + (data.detail || "Server rejected opname."));
+                }
+            } catch (err) {
+                alert("Submission failed: " + err.message);
+            }
+        }
+
+        // Administrator Portal
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('open');
+        }
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('open');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            if (u === 'superadmin' && p === 'Administrasi##') {
+                currentAuthRole = 'superadmin';
+                localStorage.setItem('auth-role', 'superadmin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                closeLoginModal();
+                updateAuthUI();
+                alert("Unlocked: Administrator access granted.");
+            } else if (u === 'admin' && p === 'Administrasi#') {
+                currentAuthRole = 'admin';
+                localStorage.setItem('auth-role', 'admin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                closeLoginModal();
+                updateAuthUI();
+                alert("Unlocked: Administrator access granted.");
+            } else {
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username_or_email: u, password: p })
+                    });
+                    const d = await res.json();
+                    if (res.ok && d.user) {
+                        currentAuthRole = d.user.role || 'user';
+                        localStorage.setItem('auth-role', currentAuthRole);
+                        localStorage.setItem('auth-user-name', d.user.name || u);
+                        localStorage.setItem('auth-user-email', d.user.email || '');
+                        localStorage.setItem('auth-user-title', d.user.job_title || 'Operator');
+                        closeLoginModal();
+                        updateAuthUI();
+                        alert(`Welcome, ${d.user.name}! You are signed in as ${d.user.job_title || 'Operator'}.`);
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Auth error", err);
+                }
+                alert("Invalid username or password credentials.");
+            }
+        }
+
+        function logout() {
+            currentAuthRole = null;
+            localStorage.removeItem('auth-role');
+            localStorage.removeItem('auth-user-name');
+            localStorage.removeItem('auth-user-email');
+            localStorage.removeItem('auth-user-title');
+            window.location.href = '/';
+        }
+
+        function openSuperadminSettings(defaultTab = 'branding') {
+            fetch('/api/settings').then(r => r.json()).then(s => {
+                if (document.getElementById('settingRoomTitle')) document.getElementById('settingRoomTitle').value = s.room_title || '';
+                if (document.getElementById('settingGroupTitle')) document.getElementById('settingGroupTitle').value = s.group_title || '';
+                if (document.getElementById('settingRoomStatus')) document.getElementById('settingRoomStatus').value = s.room_status || 'active';
+
+                if (document.getElementById('modalBrandRoomTitle')) document.getElementById('modalBrandRoomTitle').value = s.room_title || '';
+                if (document.getElementById('modalBrandGroupTitle')) document.getElementById('modalBrandGroupTitle').value = s.group_title || '';
+
+                const pApp = document.getElementById('modalPreviewAppLogo');
+                if (pApp) {
+                    if (s.app_logo_url) {
+                        pApp.innerHTML = `<img src="${s.app_logo_url}" style="max-height:36px; max-width:100%; object-fit:contain;">`;
+                    } else {
+                        pApp.innerHTML = `<span style="font-size:0.65rem; color:var(--text-muted);">Default SVG</span>`;
+                    }
+                }
+                const pRep = document.getElementById('modalPreviewReportLogo');
+                if (pRep) {
+                    if (s.report_logo_url) {
+                        pRep.innerHTML = `<img src="${s.report_logo_url}" style="max-height:36px; max-width:100%; object-fit:contain;">`;
+                    } else {
+                        pRep.innerHTML = `<span style="font-size:0.65rem; color:var(--text-muted);">Default SVG</span>`;
+                    }
+                }
+
+                switchSuperadminTab(defaultTab);
+                document.getElementById('superadminModal').classList.add('open');
+            });
+        }
+        function closeSuperadminModal() {
+            document.getElementById('superadminModal').classList.remove('open');
+        }
+
+        function switchSuperadminTab(tab) {
+            const tabBrand = document.getElementById('tabContentSuperadminBrand');
+            const tabRoom = document.getElementById('tabContentSuperadminRoom');
+            const tabSig = document.getElementById('tabContentSuperadminSig');
+            const btnBrand = document.getElementById('tabBtnSuperadminBrand');
+            const btnRoom = document.getElementById('tabBtnSuperadminRoom');
+            const btnSig = document.getElementById('tabBtnSuperadminSig');
+
+            if (tabBrand) tabBrand.style.display = 'none';
+            if (tabRoom) tabRoom.style.display = 'none';
+            if (tabSig) tabSig.style.display = 'none';
+
+            if (btnBrand) { btnBrand.style.borderBottomColor = 'transparent'; btnBrand.style.color = 'var(--text-muted)'; }
+            if (btnRoom) { btnRoom.style.borderBottomColor = 'transparent'; btnRoom.style.color = 'var(--text-muted)'; }
+            if (btnSig) { btnSig.style.borderBottomColor = 'transparent'; btnSig.style.color = 'var(--text-muted)'; }
+
+            if (tab === 'sig') {
+                if (tabSig) tabSig.style.display = 'block';
+                if (btnSig) { btnSig.style.borderBottomColor = 'var(--accent)'; btnSig.style.color = 'var(--text-main)'; }
+                loadModalSignatories();
+            } else if (tab === 'room') {
+                if (tabRoom) tabRoom.style.display = 'block';
+                if (btnRoom) { btnRoom.style.borderBottomColor = 'var(--accent)'; btnRoom.style.color = 'var(--text-main)'; }
+            } else {
+                if (tabBrand) tabBrand.style.display = 'block';
+                if (btnBrand) { btnBrand.style.borderBottomColor = 'var(--accent)'; btnBrand.style.color = 'var(--text-main)'; }
+            }
+        }
+
+        async function handleSaveBrandingModal(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('room_title', document.getElementById('modalBrandRoomTitle').value);
+            fd.append('group_title', document.getElementById('modalBrandGroupTitle').value);
+            fd.append('role', localStorage.getItem('auth-role') || 'superadmin');
+
+            const fApp = document.getElementById('modalFileAppLogo').files[0];
+            if (fApp) fd.append('app_logo', fApp);
+
+            const fRep = document.getElementById('modalFileReportLogo').files[0];
+            if (fRep) fd.append('report_logo', fRep);
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("✓ Branding and logos saved successfully!");
+                    closeSuperadminModal();
+                    loadSettings();
+                } else {
+                    alert("Failed to save branding: " + (data.detail || "Server error"));
+                }
+            } catch (err) {
+                alert("Error saving branding: " + err.message);
+            }
+        }
+
+        async function handleModalResetLogo(type) {
+            const label = (type === 'app') ? "Apps Web Logo" : "PDF Report Logo";
+            if (!confirm(`Revert ${label} back to system default?`)) return;
+            const fd = new FormData();
+            fd.append('role', localStorage.getItem('auth-role') || 'superadmin');
+            if (type === 'app') fd.append('reset_app_logo', '1');
+            if (type === 'report') fd.append('reset_report_logo', '1');
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                if (res.ok) {
+                    alert(`${label} reverted to default.`);
+                    openSuperadminSettings('branding');
+                    loadSettings();
+                }
+            } catch (err) {
+                alert("Error resetting logo: " + err.message);
+            }
+        }
+
+        async function loadModalSignatories() {
+            try {
+                const res = await fetch('/api/signatories/current');
+                const s = await res.json();
+                document.getElementById('modalSigDibuatTitle').value = s.dibuat_title || '';
+                document.getElementById('modalSigDibuatName').value = s.dibuat_name || '';
+                document.getElementById('modalSigDiperiksaTitle').value = s.diperiksa_title || '';
+                document.getElementById('modalSigDiperiksaName').value = s.diperiksa_name || '';
+                document.getElementById('modalSigDisetujuiTitle').value = s.disetujui_title || '';
+                document.getElementById('modalSigDisetujuiName').value = s.disetujui_name || '';
+
+                const hRes = await fetch('/api/signatories/history');
+                const hList = await hRes.json();
+                const box = document.getElementById('modalSigHistoryList');
+                box.innerHTML = '';
+                if (!hList || hList.length === 0) {
+                    box.innerText = 'No historical records yet.';
+                    return;
+                }
+                hList.forEach(h => {
+                    const isAct = h.is_active === 1;
+                    box.innerHTML += `
+                        <div style="padding:4px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>v${h.version}</strong> (${h.created_at || '-'}): 
+                                ${h.diperiksa_title} (<em>${h.diperiksa_name}</em>) • ${h.disetujui_title} (<em>${h.disetujui_name}</em>)
+                                ${h.notes ? '<br><small style="color:var(--text-muted);">' + h.notes + '</small>' : ''}
+                            </div>
+                            <div>
+                                ${isAct ? '<span style="color:#2da44e; font-weight:bold;">Active</span>' : `<button type="button" class="btn-small" onclick="rollbackSignatoriesFromModal(${h.version})">Revert</button>`}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Error loading modal signatories", e);
+            }
+        }
+
+        async function handleSaveSignatoriesModal(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('dibuat_label', 'Dibuat');
+            fd.append('dibuat_title', document.getElementById('modalSigDibuatTitle').value);
+            fd.append('dibuat_name', document.getElementById('modalSigDibuatName').value);
+            fd.append('diperiksa_label', 'Diperiksa');
+            fd.append('diperiksa_title', document.getElementById('modalSigDiperiksaTitle').value);
+            fd.append('diperiksa_name', document.getElementById('modalSigDiperiksaName').value);
+            fd.append('disetujui_label', 'Disetujui');
+            fd.append('disetujui_title', document.getElementById('modalSigDisetujuiTitle').value);
+            fd.append('disetujui_name', document.getElementById('modalSigDisetujuiName').value);
+            fd.append('notes', document.getElementById('modalSigNotes').value);
+            fd.append('updated_by', localStorage.getItem('auth-role') || 'admin');
+
+            const res = await fetch('/api/signatories', { method: 'POST', body: fd });
+            if (res.ok) {
+                alert("Signatories configuration updated and recorded in history.");
+                document.getElementById('modalSigNotes').value = '';
+                loadModalSignatories();
+            } else {
+                alert("Failed to update signatories.");
+            }
+        }
+
+        async function rollbackSignatoriesFromModal(ver) {
+            if (!confirm(`Revert signatories to historical version ${ver}?`)) return;
+            const res = await fetch(`/api/signatories/rollback/${ver}`, { method: 'POST' });
+            if (res.ok) {
+                loadModalSignatories();
+            }
+        }
+
+        async function saveSuperadminSettings(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('room_title', document.getElementById('settingRoomTitle').value);
+            fd.append('group_title', document.getElementById('settingGroupTitle').value);
+            fd.append('room_status', document.getElementById('settingRoomStatus').value);
+
+            const res = await fetch('/api/settings', { method: 'POST', body: fd });
+            if (res.ok) {
+                closeSuperadminModal();
+                loadSettings();
+                alert("Room settings updated successfully.");
+            } else {
+                alert("Failed to update settings.");
+            }
+        }
+
+        async function togglePauseRoom() {
+            const sRes = await fetch('/api/settings');
+            const s = await sRes.json();
+            const newStatus = (s.room_status === 'paused') ? 'active' : 'paused';
+
+            const fd = new FormData();
+            fd.append('room_title', s.room_title);
+            fd.append('group_title', s.group_title);
+            fd.append('room_status', newStatus);
+
+            const res = await fetch('/api/settings', { method: 'POST', body: fd });
+            if (res.ok) {
+                loadSettings();
+                alert(`Workshop room is now ${newStatus.toUpperCase()}`);
+            }
+        }
+    </script>
+</body>
+
+</html>

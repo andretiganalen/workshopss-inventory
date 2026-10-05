@@ -1,0 +1,9 @@
+<svg width="320" height="200" viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="320" height="200" fill="#1c2128"/>
+    <rect x="2" y="2" width="316" height="196" stroke="#30363d" stroke-width="2" rx="8"/>
+    <circle cx="160" cy="85" r="44" fill="#238636" fill-opacity="0.15"/>
+    <circle cx="160" cy="85" r="32" stroke="#238636" stroke-width="2.5"/>
+    <path d="M160 55V115M130 85H190" stroke="#238636" stroke-width="2" stroke-linecap="round"/>
+    <text x="160" y="152" fill="#e6edf3" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle">3D Printer (FDM) [EQ-3DP-00016]</text>
+    <text x="160" y="172" fill="#8b949e" font-family="Arial" font-size="11" text-anchor="middle">FACILITY REPOSITORY ASSET</text>
+</svg>

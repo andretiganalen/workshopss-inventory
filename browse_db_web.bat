@@ -1,0 +1,3 @@
+@echo off
+echo Starting SQLite Web Editor on http://127.0.0.1:8080 ...
+python -m sqlite_web "%~dp0inventory.db" --port 8080

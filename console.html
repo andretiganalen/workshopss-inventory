@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facility Management &amp; Administrator Console - Radar EW</title>
+    <style>
+        :root {
+            --bg-body: #0d1117;
+            --bg-card: #161b22;
+            --bg-header: #161b22;
+            --border: #30363d;
+            --border-hover: #8b949e;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --accent-blue: #1f6feb;
+            --accent-blue-hover: #388bfd;
+            --tag-bg: #21262d;
+            --danger: #cf222e;
+            --danger-bg: rgba(207, 34, 46, 0.15);
+            --warning-bg: rgba(187, 128, 9, 0.15);
+            --warning-border: #bb8009;
+            --warning-text: #f0883e;
+            --success-text: #3fb950;
+            --modal-backdrop: rgba(0, 0, 0, 0.7);
+        }
+        * { box-sizing: border-box; margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); font-size: 13px; line-height: 1.5; padding-bottom: 60px; }
+        
+        /* Top Navigation */
+        header {
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-brand h1 {
+            font-size: 1.15rem;
+            color: #fff;
+            font-weight: 600;
+        }
+        .header-brand .role-badge {
+            background: rgba(31, 111, 235, 0.2);
+            color: #58a6ff;
+            border: 1px solid rgba(31, 111, 235, 0.4);
+            border-radius: 980px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .nav-btn {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.82rem;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-btn:hover { border-color: var(--border-hover); color: #fff; }
+        .nav-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .nav-btn.primary:hover { background: var(--accent-hover); }
+
+        /* Main Container */
+        .container {
+            max-width: 1180px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        /* Console Tabs */
+        .console-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 22px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 18px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active {
+            color: #fff;
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header h2 {
+            font-size: 1.1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .desc-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        /* Alert Warning Box */
+        .alert-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+        }
+        .alert-box strong { color: var(--warning-text); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+        th {
+            background: var(--tag-bg);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Buttons & Forms */
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus {
+            border-color: var(--accent-blue);
+        }
+        .btn-submit {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            padding: 9px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-submit:hover { background: var(--accent-hover); }
+        .btn-blue {
+            background: var(--accent-blue);
+        }
+        .btn-blue:hover { background: var(--accent-blue-hover); }
+        .btn-small {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-small:hover { border-color: #fff; color: #fff; }
+        .btn-small.danger {
+            color: var(--danger);
+            border-color: rgba(207, 34, 46, 0.4);
+        }
+        .btn-small.danger:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+            color: #ff7b72;
+        }
+
+        .badge-count {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        /* Modal Overlay */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--modal-backdrop);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 16px;
+        }
+        .modal.open { display: flex; }
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 540px;
+            padding: 24px;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-header h3 { font-size: 1rem; color: #fff; }
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: #fff; }
+
+        .toast-msg {
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        /* Signatory 3-Col */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .sig-panel {
+            background: var(--tag-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+        }
+        .sig-panel-badge {
+            display: inline-block;
+            background: rgba(35, 134, 54, 0.2);
+            color: #3fb950;
+            border: 1px solid rgba(56, 139, 253, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-brand">
+            <div id="headerLogoWrap" style="width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <circle cx="12" cy="11" r="3"/>
+                </svg>
+            </div>
+            <div>
+                <h1 id="topConsoleTitle">Facility Management Console</h1>
+                <div style="font-size:0.75rem; color:var(--text-muted);" id="topConsoleSubtitle">Radar EW Division</div>
+            </div>
+            <span class="role-badge">Superadmin Active</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-btn">🏠 Portal Landing</a>
+            <a href="/dashboard" class="nav-btn primary">📊 Dashboard</a>
+            <a href="/consumables" class="nav-btn">📦 Consumables</a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Navigation Tabs -->
+        <nav class="console-tabs">
+            <button type="button" class="tab-btn active" id="tabNavBrand" onclick="switchConsoleTab('branding')">
+                🎨 Brand &amp; Logos
+            </button>
+            <button type="button" class="tab-btn" id="tabNavRooms" onclick="switchConsoleTab('rooms')">
+                🏢 Rooms &amp; Locations
+            </button>
+            <button type="button" class="tab-btn" id="tabNavConditions" onclick="switchConsoleTab('conditions')">
+                📋 Condition List
+            </button>
+            <button type="button" class="tab-btn" id="tabNavSignatories" onclick="switchConsoleTab('signatories')">
+                📑 A4 Report Signatories
+            </button>
+        </nav>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: BRANDING & LOGOS -->
+        <!-- ========================================== -->
+        <section id="tabPaneBranding" class="tab-pane">
+            <div class="card" style="border-left: 4px solid var(--accent-blue);">
+                <div class="card-header">
+                    <h2>🎨 Facility Brand Identity &amp; Application Logos</h2>
+                </div>
+                <p class="desc-text">
+                    Customize your facility's title and logos. The <strong>Web Application Logo</strong> is displayed on the <strong>Portal Landing Page</strong> and the top header of all operational views. The <strong>PDF Report Logo</strong> appears on generated official A4 checklists and reports.
+                </p>
+
+                <form onsubmit="handleSaveBranding(event)" enctype="multipart/form-data">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px;">
+                        <div class="form-group">
+                            <label>Application Header Name (Facility / Room Title) *</label>
+                            <input type="text" id="brandRoomTitle" class="form-control" required placeholder="e.g. Radar EW Facility Workshop">
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Displayed in portal landing and top header of every page.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Organization / Group Title</label>
+                            <input type="text" id="brandGroupTitle" class="form-control" placeholder="e.g. Astacita Radar &amp; EW Division">
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Displayed as subtitle in reports and signatories.</small>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <!-- Web App Logo -->
+                        <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:8px; padding:16px;">
+                            <div style="font-weight:600; font-size:0.85rem; color:#fff; margin-bottom:8px;">
+                                🖥️ Web App &amp; Portal Landing Logo
+                            </div>
+                            <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                                <div id="previewAppLogo" style="width:60px; height:60px; border:1px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); overflow:hidden;">
+                                    <!-- Preview Image -->
+                                </div>
+                                <div style="flex:1;">
+                                    <input type="file" id="fileAppLogo" accept=".png,.jpg,.jpeg,.svg,.webp" class="form-control" style="font-size:0.8rem; padding:5px;">
+                                    <small style="color:var(--text-muted); font-size:0.72rem;">Accepts PNG, JPG, SVG, WebP. Used on Portal and Web Headers.</small>
+                                </div>
+                            </div>
+                            <button type="button" onclick="handleResetLogo('app')" class="btn-small danger">Revert to Default Logo</button>
+                        </div>
+
+                        <!-- PDF Report Logo -->
+                        <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:8px; padding:16px;">
+                            <div style="font-weight:600; font-size:0.85rem; color:#fff; margin-bottom:8px;">
+                                📄 PDF &amp; Printable Report Letterhead Logo
+                            </div>
+                            <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">
+                                <div id="previewReportLogo" style="width:60px; height:60px; border:1px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); overflow:hidden;">
+                                    <!-- Preview Image -->
+                                </div>
+                                <div style="flex:1;">
+                                    <input type="file" id="fileReportLogo" accept=".png,.jpg,.jpeg,.svg,.webp" class="form-control" style="font-size:0.8rem; padding:5px;">
+                                    <small style="color:var(--text-muted); font-size:0.72rem;">Accepts PNG, JPG, SVG, WebP. Renders on A4 reports.</small>
+                                </div>
+                            </div>
+                            <button type="button" onclick="handleResetLogo('report')" class="btn-small danger">Revert to Default Report Logo</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <button type="submit" class="btn-submit btn-blue">💾 Save Brand &amp; Logo Settings</button>
+                        <span id="brandSaveToast" class="toast-msg">✓ Branding and logos updated successfully!</span>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: ROOMS & LOCATIONS -->
+        <!-- ========================================== -->
+        <section id="tabPaneRooms" class="tab-pane" style="display:none;">
+            <!-- Orphaned Unknown Location Alert (if applicable) -->
+            <div id="orphanedAlert" class="alert-box" style="display:none;">
+                <div>
+                    <strong>⚠️ Action Required:</strong> There are <span id="orphanedCount" style="font-weight:bold;">0</span> equipment items currently tagged under <em>'Unknown Location'</em>.
+                </div>
+                <button type="button" class="btn-submit btn-blue" onclick="openBatchMoveModal('Unknown Location')" style="padding:6px 12px; font-size:0.8rem;">
+                    📦 Reassign All Unknown Items
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>🏢 Facility Rooms &amp; Workstations</h2>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn-submit btn-blue" onclick="openBatchMoveModal()">📦 Batch Move Items</button>
+                        <button type="button" class="btn-submit" onclick="openAddRoomModal()">+ Add New Room</button>
+                    </div>
+                </div>
+                <p class="desc-text">
+                    Control workshop locations, buildings, floors, and specific storage places. When a room is renamed, all historical equipment and consumables assigned to it are automatically updated.
+                </p>
+
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Location Name</th>
+                                <th>Building &amp; City</th>
+                                <th>Floor</th>
+                                <th>Specific Storage Area</th>
+                                <th style="text-align:center;">Equipment</th>
+                                <th style="text-align:center;">Consumables</th>
+                                <th style="text-align:center; width:160px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roomsTableBody">
+                            <tr><td colspan="7" style="text-align:center; padding:16px;">Loading locations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: CONDITION LIST -->
+        <!-- ========================================== -->
+        <section id="tabPaneConditions" class="tab-pane" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 Equipment Condition Standards</h2>
+                    <button type="button" class="btn-submit" onclick="openAddConditionModal()">+ Add New Condition</button>
+                </div>
+                <p class="desc-text">
+                    Manage the condition statuses available during equipment registration, transactions, and filtering. Renaming a condition automatically propagates to existing transaction records.
+                </p>
+
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:60px; text-align:center;">No</th>
+                                <th>Condition Label</th>
+                                <th>Created Date</th>
+                                <th style="text-align:center; width:160px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conditionsTableBody">
+                            <tr><td colspan="4" style="text-align:center; padding:16px;">Loading conditions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: A4 REPORT SIGNATORIES -->
+        <!-- ========================================== -->
+        <section id="tabPaneSignatories" class="tab-pane" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📑 A4 Vertical Report Signatories (Dibuat, Diperiksa, Disetujui)</h2>
+                    <span id="activeVerBadge" class="badge-count">Active Version: Loading...</span>
+                </div>
+                <p class="desc-text">
+                    Configure official acknowledgement signatories for vertical A4 reports. Changes are permanently archived in the historical audit log below.
+                </p>
+
+                <form onsubmit="handleSaveSignatories(event)">
+                    <div class="grid-3" style="margin-bottom:16px;">
+                        <!-- Column 1: Dibuat -->
+                        <div class="sig-panel">
+                            <span class="sig-panel-badge">1. Pembuat / PIC</span>
+                            <div class="form-group">
+                                <label>Signatory Label</label>
+                                <input type="text" id="sigDibuatLabel" class="form-control" value="Dibuat" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Title / Position</label>
+                                <input type="text" id="sigDibuatTitle" class="form-control" placeholder="e.g. PIC Workshop" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Officer Name</label>
+                                <input type="text" id="sigDibuatName" class="form-control" placeholder="e.g. Officer Name" required>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Diperiksa -->
+                        <div class="sig-panel">
+                            <span class="sig-panel-badge">2. Pemeriksa / QA</span>
+                            <div class="form-group">
+                                <label>Signatory Label</label>
+                                <input type="text" id="sigDiperiksaLabel" class="form-control" value="Diperiksa" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Title / Position</label>
+                                <input type="text" id="sigDiperiksaTitle" class="form-control" placeholder="e.g. Head of Warehouse" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Officer Name</label>
+                                <input type="text" id="sigDiperiksaName" class="form-control" placeholder="e.g. Inspector Name" required>
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Disetujui -->
+                        <div class="sig-panel">
+                            <span class="sig-panel-badge">3. Penyetuju / Head</span>
+                            <div class="form-group">
+                                <label>Signatory Label</label>
+                                <input type="text" id="sigDisetujuiLabel" class="form-control" value="Disetujui" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Title / Position</label>
+                                <input type="text" id="sigDisetujuiTitle" class="form-control" placeholder="e.g. Facility Manager" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Officer Name</label>
+                                <input type="text" id="sigDisetujuiName" class="form-control" placeholder="e.g. Manager Name" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Reason for Update / Audit Note</label>
+                        <input type="text" id="sigNotes" class="form-control" placeholder="e.g. Updated signatories for 2026 operational deployment">
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                        <button type="submit" class="btn-submit">💾 Save &amp; Archive in History</button>
+                        <span id="saveToast" class="toast-msg">✓ Signatories updated successfully!</span>
+                    </div>
+                </form>
+
+                <!-- History Table -->
+                <div style="margin-top:24px;">
+                    <h3 style="color:#fff; font-size:0.95rem; margin-bottom:8px;">📜 Historical Signatory Records</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:45px;">Ver</th>
+                                    <th style="width:130px;">Effective Date</th>
+                                    <th>1. Dibuat</th>
+                                    <th>2. Diperiksa</th>
+                                    <th>3. Disetujui</th>
+                                    <th>Change Notes</th>
+                                    <th style="width:80px; text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr><td colspan="7" style="text-align:center; padding:16px;">Loading history...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS -->
+    <!-- ========================================== -->
+
+    <!-- Modal 1: Add New Room -->
+    <div id="modalAddRoom" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>+ Register New Facility Location</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalAddRoom')">&times;</button>
+            </div>
+            <form onsubmit="handleCreateRoom(event)">
+                <div class="form-group">
+                    <label>Location / Room Name *</label>
+                    <input type="text" id="newRoomName" class="form-control" required placeholder="e.g. Anechoic Chamber Lt. 1">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="newRoomCity" class="form-control" value="Bandung">
+                    </div>
+                    <div class="form-group">
+                        <label>Building</label>
+                        <input type="text" id="newRoomBuilding" class="form-control" value="Gedung Radar &amp; EW">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Floor</label>
+                        <input type="text" id="newRoomFloor" class="form-control" value="Lantai 1" placeholder="e.g. Lantai 1, Lantai 2, Atap">
+                    </div>
+                    <div class="form-group">
+                        <label>Specific Storage Area</label>
+                        <input type="text" id="newRoomStorage" class="form-control" value="Bench &amp; Shelf" placeholder="e.g. Lemari 01, Rack Central">
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                    <button type="button" class="btn-small" onclick="closeModal('modalAddRoom')">Cancel</button>
+                    <button type="submit" class="btn-submit">Register Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Edit / Repurpose Room -->
+    <div id="modalEditRoom" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>✏️ Edit / Repurpose Room Location</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalEditRoom')">&times;</button>
+            </div>
+            <form onsubmit="handleSaveRoomDetails(event)">
+                <input type="hidden" id="editRoomOriginalName">
+                <div class="form-group">
+                    <label>Location Name *</label>
+                    <input type="text" id="editRoomName" class="form-control" required>
+                    <small style="color:var(--text-muted); font-size:0.75rem;">Renaming this will update all assigned equipment automatically.</small>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="editRoomCity" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Building</label>
+                        <input type="text" id="editRoomBuilding" class="form-control">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>Floor</label>
+                        <input type="text" id="editRoomFloor" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Specific Storage Area</label>
+                        <input type="text" id="editRoomStorage" class="form-control">
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                    <button type="button" class="btn-small" onclick="closeModal('modalEditRoom')">Cancel</button>
+                    <button type="submit" class="btn-submit btn-blue">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Batch Move / Reassign Items -->
+    <div id="modalBatchMove" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>📦 Batch Move / Reassign Items Between Rooms</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalBatchMove')">&times;</button>
+            </div>
+            <form onsubmit="handleExecuteBatchMove(event)">
+                <p class="desc-text" style="margin-bottom:14px;">
+                    Instantly transfer all equipment and consumables from one room to another. Ideal for clearing <em>'Unknown Location'</em> or reorganizing workshops.
+                </p>
+                <div class="form-group">
+                    <label>Source Location (From)</label>
+                    <select id="moveFromSelect" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Destination Location (To)</label>
+                    <select id="moveToSelect" class="form-control" required></select>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+                    <button type="button" class="btn-small" onclick="closeModal('modalBatchMove')">Cancel</button>
+                    <button type="submit" class="btn-submit btn-blue">Execute Reassignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Add New Condition -->
+    <div id="modalAddCondition" class="modal">
+        <div class="modal-box" style="max-width:440px;">
+            <div class="modal-header">
+                <h3>+ Add Equipment Condition</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalAddCondition')">&times;</button>
+            </div>
+            <form onsubmit="handleCreateCondition(event)">
+                <div class="form-group">
+                    <label>Condition Label *</label>
+                    <input type="text" id="newConditionName" class="form-control" required placeholder="e.g. In Transit / Calibration Lab">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                    <button type="button" class="btn-small" onclick="closeModal('modalAddCondition')">Cancel</button>
+                    <button type="submit" class="btn-submit">Add Condition</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        let cachedLocations = [];
+        let cachedConditions = [];
+
+        // Tab Switching
+        function switchConsoleTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            if (tabId === 'branding') {
+                document.getElementById('tabPaneBranding').style.display = 'block';
+                document.getElementById('tabNavBrand').classList.add('active');
+            } else if (tabId === 'rooms') {
+                document.getElementById('tabPaneRooms').style.display = 'block';
+                document.getElementById('tabNavRooms').classList.add('active');
+                loadRoomsDetailed();
+            } else if (tabId === 'conditions') {
+                document.getElementById('tabPaneConditions').style.display = 'block';
+                document.getElementById('tabNavConditions').classList.add('active');
+                loadConditions();
+            } else if (tabId === 'signatories') {
+                document.getElementById('tabPaneSignatories').style.display = 'block';
+                document.getElementById('tabNavSignatories').classList.add('active');
+                loadSignatories();
+                loadHistory();
+            }
+        }
+
+        // Modal Helpers
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        // ==========================================
+        // 1. BRANDING & LOGOS LOGIC
+        // ==========================================
+        async function loadBrandingSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const s = await res.json();
+                document.getElementById('brandRoomTitle').value = s.room_title || '';
+                document.getElementById('brandGroupTitle').value = s.group_title || '';
+                if (s.room_title) document.getElementById('topConsoleTitle').innerText = s.room_title;
+                if (s.group_title) document.getElementById('topConsoleSubtitle').innerText = s.group_title;
+
+                const pApp = document.getElementById('previewAppLogo');
+                if (s.app_logo_url) {
+                    pApp.innerHTML = `<img src="${s.app_logo_url}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+                    document.getElementById('headerLogoWrap').innerHTML = `<img src="${s.app_logo_url}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+                } else {
+                    pApp.innerHTML = `<span style="font-size:0.68rem; color:var(--text-muted);">Default</span>`;
+                }
+
+                const pRep = document.getElementById('previewReportLogo');
+                if (s.report_logo_url) {
+                    pRep.innerHTML = `<img src="${s.report_logo_url}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+                } else {
+                    pRep.innerHTML = `<span style="font-size:0.68rem; color:var(--text-muted);">Default</span>`;
+                }
+            } catch(e) {
+                console.error("Error loading branding:", e);
+            }
+        }
+
+        async function handleSaveBranding(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('room_title', document.getElementById('brandRoomTitle').value);
+            fd.append('group_title', document.getElementById('brandGroupTitle').value);
+            fd.append('role', 'superadmin');
+
+            const fApp = document.getElementById('fileAppLogo').files[0];
+            if (fApp) fd.append('app_logo', fApp);
+
+            const fRep = document.getElementById('fileReportLogo').files[0];
+            if (fRep) fd.append('report_logo', fRep);
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                if (res.ok) {
+                    const toast = document.getElementById('brandSaveToast');
+                    toast.style.display = 'inline';
+                    setTimeout(() => toast.style.display = 'none', 3000);
+                    await loadBrandingSettings();
+                    alert("✓ Branding and logos updated successfully across all views!");
+                } else {
+                    alert("Failed to update branding settings.");
+                }
+            } catch(err) {
+                alert("Network error: " + err.message);
+            }
+        }
+
+        async function handleResetLogo(type) {
+            const label = type === 'app' ? "Web App Logo" : "PDF Report Logo";
+            if (!confirm(`Revert ${label} back to system default?`)) return;
+            const fd = new FormData();
+            fd.append('role', 'superadmin');
+            if (type === 'app') fd.append('reset_app_logo', '1');
+            if (type === 'report') fd.append('reset_report_logo', '1');
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                if (res.ok) {
+                    await loadBrandingSettings();
+                    alert(`${label} reverted to default.`);
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 2. ROOMS & LOCATIONS LOGIC
+        // ==========================================
+        async function loadRoomsDetailed() {
+            try {
+                const res = await fetch('/api/locations/detailed');
+                cachedLocations = await res.json();
+                const tbody = document.getElementById('roomsTableBody');
+                tbody.innerHTML = '';
+
+                let orphaned = 0;
+                cachedLocations.forEach(loc => {
+                    if (loc.name === 'Unknown Location') {
+                        orphaned = loc.equipment_count || 0;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${loc.name}</strong></td>
+                        <td>${loc.building} (${loc.city})</td>
+                        <td>${loc.floor}</td>
+                        <td>${loc.storage_place}</td>
+                        <td style="text-align:center;"><span class="badge-count">${loc.equipment_count || 0}</span></td>
+                        <td style="text-align:center;"><span class="badge-count">${loc.consumables_count || 0}</span></td>
+                        <td style="text-align:center;">
+                            <button type="button" class="btn-small" onclick="openEditRoomModal('${encodeURIComponent(JSON.stringify(loc))}')">✏️ Edit</button>
+                            ${loc.name !== 'Unknown Location' ? `<button type="button" class="btn-small danger" onclick="handleDeleteRoom('${loc.name}')">🗑️ Delete</button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const alertBox = document.getElementById('orphanedAlert');
+                if (orphaned > 0) {
+                    document.getElementById('orphanedCount').innerText = orphaned;
+                    alertBox.style.display = 'flex';
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            } catch(e) {
+                console.error("Error loading rooms:", e);
+            }
+        }
+
+        function openAddRoomModal() {
+            document.getElementById('newRoomName').value = '';
+            openModal('modalAddRoom');
+        }
+
+        async function handleCreateRoom(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('name', document.getElementById('newRoomName').value);
+            fd.append('city', document.getElementById('newRoomCity').value);
+            fd.append('building', document.getElementById('newRoomBuilding').value);
+            fd.append('floor', document.getElementById('newRoomFloor').value);
+            fd.append('storage_place', document.getElementById('newRoomStorage').value);
+            fd.append('role', 'admin');
+
+            try {
+                const res = await fetch('/api/locations', { method: 'POST', body: fd });
+                const d = await res.json();
+                if (res.ok) {
+                    closeModal('modalAddRoom');
+                    await loadRoomsDetailed();
+                    alert("Location registered successfully!");
+                } else {
+                    alert(d.detail || d.message || "Failed to register room.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        function openEditRoomModal(jsonStr) {
+            const loc = JSON.parse(decodeURIComponent(jsonStr));
+            document.getElementById('editRoomOriginalName').value = loc.name;
+            document.getElementById('editRoomName').value = loc.name;
+            document.getElementById('editRoomCity').value = loc.city || 'Bandung';
+            document.getElementById('editRoomBuilding').value = loc.building || 'Gedung Radar & EW';
+            document.getElementById('editRoomFloor').value = loc.floor || 'Lantai 1';
+            document.getElementById('editRoomStorage').value = loc.storage_place || 'Rack & Bench';
+            openModal('modalEditRoom');
+        }
+
+        async function handleSaveRoomDetails(e) {
+            e.preventDefault();
+            const orig = document.getElementById('editRoomOriginalName').value;
+            const fd = new FormData();
+            fd.append('new_name', document.getElementById('editRoomName').value);
+            fd.append('city', document.getElementById('editRoomCity').value);
+            fd.append('building', document.getElementById('editRoomBuilding').value);
+            fd.append('floor', document.getElementById('editRoomFloor').value);
+            fd.append('storage_place', document.getElementById('editRoomStorage').value);
+            fd.append('role', 'admin');
+
+            try {
+                const res = await fetch(`/api/locations/${encodeURIComponent(orig)}/details`, { method: 'PUT', body: fd });
+                if (res.ok) {
+                    closeModal('modalEditRoom');
+                    await loadRoomsDetailed();
+                    alert("Room details updated successfully!");
+                } else {
+                    alert("Failed to update room details.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function handleDeleteRoom(name) {
+            if (!confirm(`Delete location '${name}'? Any assigned equipment and consumables will be safely moved to 'Unknown Location'.`)) return;
+            try {
+                const res = await fetch(`/api/locations/${encodeURIComponent(name)}?role=admin`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadRoomsDetailed();
+                    alert(`Location '${name}' deleted.`);
+                } else {
+                    alert("Failed to delete location.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        function openBatchMoveModal(defaultFrom = '') {
+            const fromSel = document.getElementById('moveFromSelect');
+            const toSel = document.getElementById('moveToSelect');
+            fromSel.innerHTML = '';
+            toSel.innerHTML = '';
+
+            cachedLocations.forEach(l => {
+                const o1 = document.createElement('option');
+                o1.value = l.name;
+                o1.innerText = `${l.name} (${l.equipment_count || 0} items)`;
+                fromSel.appendChild(o1);
+
+                if (l.name !== 'Unknown Location') {
+                    const o2 = document.createElement('option');
+                    o2.value = l.name;
+                    o2.innerText = l.name;
+                    toSel.appendChild(o2);
+                }
+            });
+
+            if (defaultFrom) fromSel.value = defaultFrom;
+            openModal('modalBatchMove');
+        }
+
+        async function handleExecuteBatchMove(e) {
+            e.preventDefault();
+            const fromLoc = document.getElementById('moveFromSelect').value;
+            const toLoc = document.getElementById('moveToSelect').value;
+
+            if (fromLoc === toLoc) {
+                alert("Source and Destination rooms cannot be the same.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to move all items from '${fromLoc}' to '${toLoc}'?`)) return;
+
+            const fd = new FormData();
+            fd.append('from_location', fromLoc);
+            fd.append('to_location', toLoc);
+            fd.append('role', 'admin');
+
+            try {
+                const res = await fetch('/api/locations/reassign-items', { method: 'POST', body: fd });
+                const d = await res.json();
+                if (res.ok) {
+                    closeModal('modalBatchMove');
+                    await loadRoomsDetailed();
+                    alert(d.message || "Items successfully moved.");
+                } else {
+                    alert(d.detail || "Failed to reassign items.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 3. CONDITIONS LOGIC
+        // ==========================================
+        async function loadConditions() {
+            try {
+                const res = await fetch('/api/conditions');
+                cachedConditions = await res.json();
+                const tbody = document.getElementById('conditionsTableBody');
+                tbody.innerHTML = '';
+
+                cachedConditions.forEach((c, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="text-align:center; color:var(--text-muted);">${idx + 1}</td>
+                        <td><strong>${c.name}</strong></td>
+                        <td style="color:var(--text-muted); font-size:0.78rem;">${c.created_at || 'Default'}</td>
+                        <td style="text-align:center;">
+                            <button type="button" class="btn-small" onclick="handleRenameCondition('${encodeURIComponent(c.name)}')">✏️ Rename</button>
+                            <button type="button" class="btn-small danger" onclick="handleDeleteCondition('${encodeURIComponent(c.name)}')">🗑️ Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) {
+                console.error("Error loading conditions:", e);
+            }
+        }
+
+        function openAddConditionModal() {
+            document.getElementById('newConditionName').value = '';
+            openModal('modalAddCondition');
+        }
+
+        async function handleCreateCondition(e) {
+            e.preventDefault();
+            const name = document.getElementById('newConditionName').value.trim();
+            const fd = new FormData();
+            fd.append('name', name);
+            fd.append('role', 'admin');
+
+            try {
+                const res = await fetch('/api/conditions', { method: 'POST', body: fd });
+                const d = await res.json();
+                if (res.ok) {
+                    closeModal('modalAddCondition');
+                    await loadConditions();
+                    alert("Condition added successfully!");
+                } else {
+                    alert(d.detail || d.message || "Failed to add condition.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function handleRenameCondition(encName) {
+            const oldName = decodeURIComponent(encName);
+            const newName = prompt(`Enter new label for condition '${oldName}':`, oldName);
+            if (!newName || newName.trim() === oldName) return;
+
+            const fd = new FormData();
+            fd.append('new_name', newName.trim());
+            fd.append('role', 'admin');
+
+            try {
+                const res = await fetch(`/api/conditions/${encodeURIComponent(oldName)}`, { method: 'PUT', body: fd });
+                if (res.ok) {
+                    await loadConditions();
+                    alert("Condition renamed successfully.");
+                } else {
+                    alert("Failed to rename condition.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function handleDeleteCondition(encName) {
+            const name = decodeURIComponent(encName);
+            if (!confirm(`Delete condition '${name}'?`)) return;
+
+            try {
+                const res = await fetch(`/api/conditions/${encodeURIComponent(name)}?role=admin`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadConditions();
+                    alert(`Condition '${name}' deleted.`);
+                } else {
+                    alert("Failed to delete condition.");
+                }
+            } catch(err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // 4. SIGNATORIES LOGIC
+        // ==========================================
+        async function loadSignatories() {
+            try {
+                const res = await fetch('/api/signatories/current');
+                const sig = await res.json();
+                
+                document.getElementById('sigDibuatLabel').value = sig.dibuat_label || 'Dibuat';
+                document.getElementById('sigDibuatTitle').value = sig.dibuat_title || '';
+                document.getElementById('sigDibuatName').value = sig.dibuat_name || '';
+
+                document.getElementById('sigDiperiksaLabel').value = sig.diperiksa_label || 'Diperiksa';
+                document.getElementById('sigDiperiksaTitle').value = sig.diperiksa_title || '';
+                document.getElementById('sigDiperiksaName').value = sig.diperiksa_name || '';
+
+                document.getElementById('sigDisetujuiLabel').value = sig.disetujui_label || 'Disetujui';
+                document.getElementById('sigDisetujuiTitle').value = sig.disetujui_title || '';
+                document.getElementById('sigDisetujuiName').value = sig.disetujui_name || '';
+
+                document.getElementById('activeVerBadge').innerText = `Active Version: v${sig.version || 1} (${sig.created_at || 'Current'})`;
+            } catch(e) {
+                console.error("Error loading signatories:", e);
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/signatories/history');
+                const history = await res.json();
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+
+                if (!history || history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:16px;">No history records found.</td></tr>';
+                    return;
+                }
+
+                history.forEach(h => {
+                    const isActive = h.is_active === 1;
+                    const actionBtn = isActive 
+                        ? '<span style="color:#3fb950; font-weight:600; font-size:0.75rem;">Current Active</span>'
+                        : `<button class="btn-small" onclick="rollbackSignatories(${h.version})">Re-activate</button>`;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:bold; color:#fff;">v${h.version}</td>
+                        <td style="color:var(--text-muted); font-size:0.78rem;">${h.created_at || '-'}</td>
+                        <td><strong>${h.dibuat_title}</strong><br><small style="color:var(--text-muted);">${h.dibuat_name}</small></td>
+                        <td><strong>${h.diperiksa_title}</strong><br><small style="color:var(--text-muted);">${h.diperiksa_name}</small></td>
+                        <td><strong>${h.disetujui_title}</strong><br><small style="color:var(--text-muted);">${h.disetujui_name}</small></td>
+                        <td style="color:var(--text-muted); font-size:0.78rem;">${h.notes || '-'}</td>
+                        <td style="text-align:center;">${actionBtn}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch(e) {
+                console.error("Error loading history:", e);
+            }
+        }
+
+        async function handleSaveSignatories(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('dibuat_label', document.getElementById('sigDibuatLabel').value);
+            fd.append('dibuat_title', document.getElementById('sigDibuatTitle').value);
+            fd.append('dibuat_name', document.getElementById('sigDibuatName').value);
+
+            fd.append('diperiksa_label', document.getElementById('sigDiperiksaLabel').value);
+            fd.append('diperiksa_title', document.getElementById('sigDiperiksaTitle').value);
+            fd.append('diperiksa_name', document.getElementById('sigDiperiksaName').value);
+
+            fd.append('disetujui_label', document.getElementById('sigDisetujuiLabel').value);
+            fd.append('disetujui_title', document.getElementById('sigDisetujuiTitle').value);
+            fd.append('disetujui_name', document.getElementById('sigDisetujuiName').value);
+
+            fd.append('notes', document.getElementById('sigNotes').value);
+            fd.append('updated_by', 'Administrator');
+
+            try {
+                const res = await fetch('/api/signatories', { method: 'POST', body: fd });
+                if (res.ok) {
+                    document.getElementById('sigNotes').value = '';
+                    const toast = document.getElementById('saveToast');
+                    toast.style.display = 'inline';
+                    setTimeout(() => toast.style.display = 'none', 3000);
+                    await loadSignatories();
+                    await loadHistory();
+                    alert("Signatories updated successfully!");
+                } else {
+                    alert("Error saving signatories.");
+                }
+            } catch(err) {
+                alert("Network error: " + err.message);
+            }
+        }
+
+        async function rollbackSignatories(ver) {
+            if (!confirm(`Revert signatories configuration to version ${ver}?`)) return;
+            try {
+                const res = await fetch(`/api/signatories/rollback/${ver}`, { method: 'POST' });
+                if (res.ok) {
+                    await loadSignatories();
+                    await loadHistory();
+                } else {
+                    alert("Failed to revert configuration.");
+                }
+            } catch(e) {
+                alert("Network error: " + e.message);
+            }
+        }
+
+        // Initialize
+        window.onload = async () => {
+            await loadBrandingSettings();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar EW Facility - Consumables & Materials Inventory</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }
+
+        :root[data-theme="light"] {
+            --bg-body: #ffffff;
+            --bg-card: #f8f9fa;
+            --bg-card-hover: #f1f3f5;
+            --bg-header: #ffffff;
+            --border: #d0d7de;
+            --border-subtle: #eaeef2;
+            --text-main: #1f2328;
+            --text-muted: #656d76;
+            --accent: #1f883d;
+            --accent-hover: #1a7f37;
+            --credit-color: #1a7f37;
+            --debit-color: #cf222e;
+            --toolbar-bg: #f6f8fa;
+            --table-header-bg: #f0f2f5;
+            --modal-bg: #ffffff;
+            --tag-bg: #eef1f4;
+            --link-color: #0969da;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        :root[data-theme="dark"] {
+            --bg-body: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #21262d;
+            --bg-header: #161b22;
+            --border: #30363d;
+            --border-subtle: #21262d;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --credit-color: #3fb950;
+            --debit-color: #ff7b72;
+            --toolbar-bg: #161b22;
+            --table-header-bg: #21262d;
+            --modal-bg: #161b22;
+            --tag-bg: #21262d;
+            --link-color: #58a6ff;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 {
+            font-size: 1.15rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            margin-left: 10px;
+        }
+
+        .nav-tab {
+            padding: 5px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            transition: all 0.15s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-main);
+            background: var(--bg-card-hover);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--tag-bg);
+            border-radius: 6px;
+            padding: 2px;
+            margin-left: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .view-btn {
+            border: none;
+            background: transparent;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .view-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-header {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-header:hover {
+            opacity: 0.9;
+        }
+
+        .btn-new-tool {
+            background: #0969da;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-toggle-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .auth-status-pill {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--tag-bg);
+            color: var(--text-muted);
+        }
+
+        /* Toolbar / Filters (Requirement 86) */
+        .toolbar {
+            background: var(--toolbar-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .filter-input {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .filter-input:focus {
+            border-color: var(--accent);
+        }
+
+        .filter-select {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 0.8rem;
+            outline: none;
+            cursor: pointer;
+            max-width: 220px;
+        }
+
+        .btn-action-small {
+            padding: 5px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .btn-action-small:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .meta-strip {
+            padding: 8px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .expenses-breakdown-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .total-expenses-pill {
+            font-weight: bold;
+            color: var(--text-main);
+            font-size: 0.85rem;
+        }
+
+        .subtotal-expenses-pill {
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 0.85rem;
+        }
+
+        .expense-pct-pill {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(31, 111, 235, 0.12);
+            color: var(--link-color);
+            border: 1px solid rgba(56, 139, 253, 0.35);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--table-header-bg);
+        }
+
+        th,
+        td {
+            padding: 9px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+            white-space: nowrap;
+        }
+
+        th {
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        th.col-purpose,
+        td.col-purpose {
+            white-space: normal !important;
+            min-width: 240px;
+            max-width: 450px;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        /* Debit, Credit, Balance Styling (Requirement 85) */
+        .credit-qty {
+            color: var(--credit-color);
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .debit-qty {
+            color: var(--debit-color);
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .balance-qty {
+            font-weight: bold;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+
+        .badge-stock {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .stock-good {
+            background: #dafbe1;
+            color: #1a7f37;
+        }
+
+        .stock-low {
+            background: #fff8c5;
+            color: #9a6700;
+        }
+
+        .stock-depleted {
+            background: #ffebe9;
+            color: #cf222e;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 520px;
+            max-width: 95vw;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 16px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 0.78rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.82rem;
+        }
+
+        .btn-submit {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .secret-lower-portal {
+            position: fixed;
+            bottom: 12px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            cursor: pointer;
+            z-index: 999;
+            padding: 2px 6px;
+            transition: color 0.2s, opacity 0.2s;
+            user-select: none;
+            opacity: 0.45;
+        }
+
+        .secret-lower-portal:hover {
+            color: var(--accent);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-left">
+            <!-- Logo on top left -->
+            <div id="consAppLogoContainer" style="display:inline-flex; align-items:center;">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    style="border-radius:6px; vertical-align:middle;">
+                    <rect width="32" height="32" rx="6" fill="#1f883d" />
+                    <circle cx="16" cy="16" r="11" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="2 2" />
+                    <circle cx="16" cy="16" r="6" stroke="#ffffff" stroke-width="1.5" />
+                    <path d="M16 16L24 8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+                    <circle cx="16" cy="16" r="2.2" fill="#ffffff" />
+                </svg>
+            </div>
+            <h1>
+                <span id="consRoomHeading">Radar EW Facility Workshop</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">• Consumables</span>
+            </h1>
+            <!-- Action Buttons: Log & Add -->
+            <button class="btn-header" onclick="openConsumableTxModal()">Log</button>
+            <button class="btn-header btn-new-tool" onclick="openNewConsumableModal()"
+                title="Add Consumables">Add</button>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <a href="/" class="nav-tab" title="Portal Entrance">Portal</a>
+                <a href="/dashboard" class="nav-tab">Equipment</a>
+                <a href="/consumables" class="nav-tab active">Consumables</a>
+            </div>
+
+            <!-- View Toggle: Balance vs Ledger (Requirement 85) -->
+            <div class="view-toggle" style="margin-left:10px;">
+                <button id="btnViewBalance" class="view-btn active" onclick="switchView('balance')">Balance</button>
+                <button id="btnViewLedger" class="view-btn" onclick="switchView('ledger')">Ledger</button>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <span id="authStatusPill" class="auth-status-pill" onclick="openLoginModal()" style="cursor:pointer;"
+                title="Click to log in as Admin">Guest View</span>
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn"
+                title="Switch Theme">Theme</button>
+            <button id="btnLogout" style="display:none;" class="theme-toggle-btn" onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Toolbar Filters: Filter by Name, Materials ID, Project/Program, Category, Storage Location (Requirement 86) -->
+    <div class="toolbar">
+        <input type="text" id="filterName" class="filter-input" placeholder="Name..." style="width:160px;"
+            oninput="applyFilters()">
+        <input type="text" id="filterCode" class="filter-input" placeholder="Materials ID..." style="width:130px;"
+            oninput="applyFilters()">
+
+        <select id="filterProject" class="filter-select" onchange="applyFilters()">
+            <option value="">All Projects / Programs</option>
+        </select>
+
+        <select id="filterCategory" class="filter-select" onchange="applyFilters()">
+            <option value="">All Categories</option>
+        </select>
+
+        <select id="filterLocation" class="filter-select" onchange="applyFilters()">
+            <option value="">All Storage Locations</option>
+        </select>
+
+        <select id="filterStatus" class="filter-select" style="max-width:140px;" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option value="good">In Stock</option>
+            <option value="low">Low Stock</option>
+            <option value="depleted">Depleted</option>
+        </select>
+
+        <button class="btn-action-small" onclick="resetFilters()">Reset</button>
+    </div>
+
+    <main>
+        <div class="meta-strip">
+            <div id="metaCountLabel">
+                Showing <strong id="displayedCount">0</strong> of <strong id="totalCount">0</strong> items
+            </div>
+            <!-- Total Inventory Expenses side by side with Subtotal Selected, then percentage on very right side -->
+            <div class="expenses-breakdown-bar">
+                <span><span id="totalExpensesLabel">Total Inventory Value:</span> <span id="totalStockValue"
+                        class="total-expenses-pill">0</span> IDR</span>
+                <span style="color:var(--border); font-weight:300;">|</span>
+                <span>Subtotal Selected: <strong id="subtotalStockValue" class="subtotal-expenses-pill">0</strong>
+                    IDR</span>
+                <span id="consPctDisplay" class="expense-pct-pill"
+                    title="Percentage of Total Inventory Expenses">100.0%</span>
+            </div>
+        </div>
+
+        <!-- VIEW 1: Master Inventory Balance (Debit & Credit Summary) -->
+        <div id="viewContainerBalance" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:40px; text-align:center;">No</th>
+                        <th id="thConsDateSort" onclick="toggleDateSort()"
+                            style="width:130px; cursor:pointer; user-select:none;"
+                            title="Click to sort by Date & Time (Default Descending)">
+                            Date &amp; Time <span id="consDateSortIcon">▼</span>
+                        </th>
+                        <th style="width:115px;">Materials ID</th>
+                        <th>Material Name</th>
+                        <th style="width:140px;">Category</th>
+                        <th>Storage Location</th>
+                        <th style="width:90px; text-align:right;">Stock In</th>
+                        <th style="width:90px; text-align:right;">Stock Out</th>
+                        <th style="width:90px; text-align:right;">Balance</th>
+                        <th style="width:65px;">Unit</th>
+                        <th style="width:115px; text-align:right;">Unit Price (IDR)</th>
+                        <th style="width:125px; text-align:right;">Total Value (IDR)</th>
+                        <th style="width:100px;">Status</th>
+                        <th style="width:75px; text-align:center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="balanceTableBody">
+                    <tr>
+                        <td colspan="13" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
+                            consumables...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- VIEW 2: Debit & Credit Transactions Ledger (Requirement 85) -->
+        <div id="viewContainerLedger" class="table-container" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:40px; text-align:center;">No</th>
+                        <th style="width:135px;">Date &amp; Time</th>
+                        <th style="width:115px;">Materials ID</th>
+                        <th>Material Name</th>
+                        <th style="width:110px;">Type</th>
+                        <th style="width:95px; text-align:right;">Stock In</th>
+                        <th style="width:95px; text-align:right;">Stock Out</th>
+                        <th style="width:90px; text-align:right;">Balance</th>
+                        <th style="width:65px;">Unit</th>
+                        <th style="width:120px; text-align:right;">Expense (IDR)</th>
+                        <th style="width:110px;">PIC</th>
+                        <th class="col-purpose">Purpose / Project</th>
+                        <th style="width:75px; text-align:center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ledgerTableBody">
+                    <tr>
+                        <td colspan="11" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
+                            transaction ledger...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal: Log Stock Movement (In / Out) -->
+    <div id="consumableTxModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.95rem;">Log Consumable Stock Transaction</h3>
+                <button class="btn-close" onclick="closeConsumableTxModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleConsumableTxSubmit(event)">
+                    <div class="form-group" style="margin-bottom:8px;">
+                        <label style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">Filter Material by
+                            Project / Program:</label>
+                        <select id="txFilterProject" class="form-control" style="font-size:0.8rem; padding:5px 8px;"
+                            onchange="handleTxFilterProjectChange()">
+                            <option value="">All Projects / Programs</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Consumable Material *</label>
+                        <select id="txConsumableId" class="form-control" required
+                            onchange="updateSelectedConsumablePreview()">
+                            <!-- Populated -->
+                        </select>
+                    </div>
+
+                    <div id="txItemPreview"
+                        style="background:var(--tag-bg); padding:8px 10px; border-radius:6px; font-size:0.76rem; margin-bottom:12px; border:1px solid var(--border);">
+                        <div>Current Stock: <strong id="prevStock">-</strong></div>
+                        <div>Storage Location: <strong id="prevLocation">-</strong></div>
+                        <div>Material Project: <strong id="prevProject" style="color:var(--link-color);">-</strong>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Transaction Type *</label>
+                            <select id="txType" class="form-control" required>
+                                <option value="OUT">Stock Out (Usage / Deduction)</option>
+                                <option value="IN">Stock In (Restock / Addition)</option>
+                                <option value="ADJUST">Adjustment (Physical Count)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantity *</label>
+                            <input type="text" inputmode="decimal" id="txQuantity" class="form-control" required
+                                placeholder="e.g. 2" oninput="formatNumberInput(this, true)">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>PIC *</label>
+                            <input type="text" id="txPic" class="form-control" required placeholder="e.g. Bayu S.">
+                        </div>
+                        <div class="form-group">
+                            <label>Date &amp; Time *</label>
+                            <input type="text" id="txDateTime" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project / Program Allocated to</label>
+                        <input type="text" id="txProject" class="form-control" list="allConsProjectsDatalist"
+                            value="Radar EW Facility Project" placeholder="e.g. Maritime Surveillance Radars">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Purpose / Activity Details *</label>
+                        <textarea id="txPurpose" class="form-control" rows="2" required
+                            placeholder="Reason for usage or restock order details..."></textarea>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeConsumableTxModal()"
+                            class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Register New Consumable Item -->
+    <div id="newConsumableModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.95rem;">Register Consumable Material</h3>
+                <button class="btn-close" onclick="closeNewConsumableModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleCreateConsumable(event)">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Material Name *</label>
+                            <input type="text" id="newConsName" list="historicalConsumableNamesDatalist"
+                                class="form-control" required placeholder="e.g. Solder Paste Flux, Isopropyl Alcohol"
+                                oninput="autoSuggestMaterialId()" onchange="autoSuggestMaterialId()">
+                            <datalist id="historicalConsumableNamesDatalist"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Materials ID <span
+                                    style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(Auto if
+                                    blank)</span></label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="newConsId" class="form-control"
+                                    placeholder="e.g. CS-FLX-00001 (Auto if blank)">
+                                <button type="button" class="theme-toggle-btn"
+                                    style="padding:0 8px; font-size:0.75rem; white-space:nowrap;"
+                                    onclick="generateMaterialIdNow()" title="Auto generate Materials ID">✨ Auto</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Technical Specification *</label>
+                        <input type="text" id="newConsSpec" class="form-control" required
+                            placeholder="e.g. 50 Ohm, 2W, DC-18 GHz Precision">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="newConsCat" class="form-control" required onchange="autoSuggestMaterialId()">
+                                <option value="Chemicals & Soldering">Chemicals & Soldering</option>
+                                <option value="Tapes & Adhesives">Tapes & Adhesives</option>
+                                <option value="Wiring & Sleeving">Wiring & Sleeving</option>
+                                <option value="Safety & PPE">Safety & PPE</option>
+                                <option value="Hardware & Fasteners">Hardware & Fasteners</option>
+                                <option value="Prototyping & Materials">Prototyping & Materials</option>
+                                <option value="RF Cables">RF Cables</option>
+                                <option value="RF Connectors">RF Connectors</option>
+                                <option value="Consumables">Consumables</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit of Measure *</label>
+                            <input type="text" id="newConsUnit" class="form-control" required
+                                placeholder="e.g. Pcs, Roll, Spool, Bottle">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Initial Stock Qty *</label>
+                            <input type="text" inputmode="decimal" id="newConsQty" class="form-control" value="10"
+                                required oninput="formatNumberInput(this, true)">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Stock Warning *</label>
+                            <input type="text" inputmode="decimal" id="newConsMinStock" class="form-control" value="3"
+                                required oninput="formatNumberInput(this, true)">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Price (IDR)</label>
+                            <input type="text" inputmode="numeric" id="newConsPrice" class="form-control" value="0"
+                                oninput="formatNumberInput(this, false)">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div class="form-group">
+                            <label>Inception Date &amp; Time *</label>
+                            <input type="text" id="newConsDate" class="form-control" required
+                                placeholder="YYYY-MM-DD HH:MM">
+                        </div>
+                        <div class="form-group">
+                            <label>Storage Location * (Dropdown)</label>
+                            <select id="newConsLoc" class="form-control" required>
+                                <!-- Populated from locations API -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Belongs to Project / Program *</label>
+                        <input type="text" id="newConsProject" class="form-control" list="allConsProjectsDatalist"
+                            required value="Radar EW Facility Project" placeholder="e.g. Radar EW Facility Project">
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeNewConsumableModal()"
+                            class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" style="background:#0969da;">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <!-- Edit Consumable Transaction Modal -->
+    <div id="editConsumableTxModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.9rem;">✏️ Edit Consumable Movement Log #<span id="ectTxIdDisplay"></span></h3>
+                <button class="btn-close" onclick="closeEditConsumableTxModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="saveEditConsumableTx(event)">
+                    <input type="hidden" id="ectTxId">
+
+                    <div class="form-group">
+                        <label>Item Name / Material ID</label>
+                        <input type="text" id="ectItemDisplay" class="form-control" readonly style="background:var(--tag-bg); color:var(--text-muted);">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Movement Date & Time *</label>
+                        <input type="text" id="ectDateTime" class="form-control" required placeholder="YYYY-MM-DD HH:MM">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Transaction Type *</label>
+                        <select id="ectTxType" class="form-control" required>
+                            <option value="Initial Stock">Initial Stock</option>
+                            <option value="Stock IN (Restock)">Stock IN (Restock)</option>
+                            <option value="Stock OUT (Usage/Expense)">Stock OUT (Usage/Expense)</option>
+                            <option value="Adjustment IN">Adjustment IN</option>
+                            <option value="Adjustment OUT">Adjustment OUT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantity *</label>
+                        <input type="number" step="any" min="0.001" id="ectQty" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Person in Charge (PIC) *</label>
+                        <input type="text" id="ectPic" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project / Program *</label>
+                        <input type="text" id="ectProject" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Purpose / Activity / Reference *</label>
+                        <textarea id="ectPurpose" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeEditConsumableTxModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" style="background:#0969da;">Update Log</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Consumable Master Record Modal -->
+    <div id="editConsumableModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.9rem;">✏️ Edit Material Master / Fix Typos (<span id="ecCidDisplay"></span>)</h3>
+                <button class="btn-close" onclick="closeEditConsumableModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="saveEditConsumable(event)">
+                    <input type="hidden" id="ecCid">
+
+                    <div class="form-group">
+                        <label>Material / General Name *</label>
+                        <input type="text" id="ecName" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Specification / Model / Variant</label>
+                        <input type="text" id="ecSpec" class="form-control">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="ecCategory" class="form-control" required>
+                                <option value="Chemicals & Soldering">Chemicals & Soldering</option>
+                                <option value="Tapes & Adhesives">Tapes & Adhesives</option>
+                                <option value="Cleanroom Consumables">Cleanroom Consumables</option>
+                                <option value="Raw Materials">Raw Materials</option>
+                                <option value="Stationery">Stationery</option>
+                                <option value="Fasteners & Hardware">Fasteners & Hardware</option>
+                                <option value="Electronic Components">Electronic Components</option>
+                                <option value="Cables & Wire">Cables & Wire</option>
+                                <option value="Consumables">General Consumables</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Unit of Measure *</label>
+                            <input type="text" id="ecUnit" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <label>Minimum Stock Alert</label>
+                            <input type="number" step="any" id="ecMinStock" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Price (IDR)</label>
+                            <input type="number" step="any" id="ecUnitPrice" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Storage Location</label>
+                        <input type="text" id="ecLocation" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Project / Program</label>
+                        <input type="text" id="ecProject" class="form-control">
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeEditConsumableModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" style="background:#0969da;">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discreet Portal Button -->
+    <button id="secretLowerPortal" class="secret-lower-portal" onclick="openLoginModal()"
+        title="Administrator Portal">Portal</button>
+
+    <!-- Admin Portal Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-size:0.9rem;">Administrator Portal Console</h3>
+                <button class="btn-close" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Login Username</label>
+                        <input type="text" id="loginUsername" class="form-control" required placeholder="username">
+                    </div>
+                    <div class="form-group">
+                        <label>Login Password</label>
+                        <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                        <button type="button" onclick="closeLoginModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" style="background:#0969da;">Unlock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Registered Consumable Projects / Programs Datalist -->
+    <datalist id="allConsProjectsDatalist"></datalist>
+
+    <script>
+        let allConsumables = [];
+        let allTransactions = [];
+        let activeView = 'balance'; // 'balance' or 'ledger'
+        let sortDateDesc = true; // Default descending (Req 80)
+
+        function switchView(view) {
+            activeView = view;
+            document.getElementById('btnViewBalance').classList.toggle('active', view === 'balance');
+            document.getElementById('btnViewLedger').classList.toggle('active', view === 'ledger');
+            document.getElementById('viewContainerBalance').style.display = (view === 'balance') ? 'block' : 'none';
+            document.getElementById('viewContainerLedger').style.display = (view === 'ledger') ? 'block' : 'none';
+
+            if (view === 'ledger' && allTransactions.length === 0) {
+                loadTransactions();
+            } else {
+                applyFilters();
+            }
+        }
+
+        function toggleDateSort() {
+            sortDateDesc = !sortDateDesc;
+            const icon = document.getElementById('consDateSortIcon');
+            if (icon) icon.innerText = sortDateDesc ? '▼' : '▲';
+            applyFilters();
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined || num === '' || isNaN(num)) return "0";
+            const n = Number(num);
+            if (Number.isInteger(n)) {
+                return n.toLocaleString('en-US');
+            }
+            return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        function formatIDR(num) {
+            return Math.round(Number(num || 0)).toLocaleString('en-US');
+        }
+
+        function formatNumberInput(el, allowDecimal = false) {
+            const raw = el.value;
+            const selStart = el.selectionStart;
+            const digitsBeforeCursor = raw.slice(0, selStart).replace(/[^0-9]/g, '').length;
+
+            let clean = raw.replace(/,/g, '');
+            if (allowDecimal) {
+                clean = clean.replace(/[^0-9.]/g, '');
+                const parts = clean.split('.');
+                if (parts.length > 2) {
+                    clean = parts[0] + '.' + parts.slice(1).join('');
+                }
+                if (clean === '') {
+                    el.value = '';
+                    return;
+                }
+                const splitted = clean.split('.');
+                const intFormatted = splitted[0] ? Number(splitted[0]).toLocaleString('en-US') : '0';
+                el.value = splitted.length > 1 ? intFormatted + '.' + splitted[1] : intFormatted;
+            } else {
+                clean = clean.replace(/[^0-9]/g, '');
+                if (clean === '') {
+                    el.value = '';
+                    return;
+                }
+                el.value = Number(clean).toLocaleString('en-US');
+            }
+
+            let newCursor = 0;
+            let countedDigits = 0;
+            for (let i = 0; i < el.value.length; i++) {
+                if (/[0-9]/.test(el.value[i])) {
+                    countedDigits++;
+                }
+                if (countedDigits === digitsBeforeCursor) {
+                    newCursor = i + 1;
+                    break;
+                }
+            }
+            if (countedDigits < digitsBeforeCursor) {
+                newCursor = el.value.length;
+            }
+            if (el.setSelectionRange) {
+                el.setSelectionRange(newCursor, newCursor);
+            }
+        }
+
+        async function loadConsLocations() {
+            try {
+                const res = await fetch('/api/locations');
+                const locs = await res.json();
+
+                // Populate storage location filter (Req 86)
+                const filterLoc = document.getElementById('filterLocation');
+                filterLoc.innerHTML = '<option value="">All Storage Locations</option>';
+                locs.forEach(l => {
+                    filterLoc.innerHTML += `<option value="${l}">${l}</option>`;
+                });
+
+                // Populate modal location select
+                const sel = document.getElementById('newConsLoc');
+                if (sel) {
+                    sel.innerHTML = '<option value="">-- Select Storage Location --</option>';
+                    locs.forEach(l => {
+                        sel.innerHTML += `<option value="${l}">${l}</option>`;
+                    });
+                }
+            } catch (err) {
+                console.error("Error loading locations for consumables", err);
+            }
+        }
+
+        async function loadConsumables() {
+            try {
+                const res = await fetch('/api/consumables');
+                allConsumables = await res.json();
+
+                // Populate Category Filter
+                const categories = [...new Set(allConsumables.map(x => x.category).filter(Boolean))].sort();
+                const catSel = document.getElementById('filterCategory');
+                catSel.innerHTML = '<option value="">All Categories</option>';
+                categories.forEach(c => {
+                    catSel.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+
+                // Populate tx modal select
+                const txSel = document.getElementById('txConsumableId');
+                txSel.innerHTML = '<option value="">-- Choose Consumable Item --</option>';
+                allConsumables.forEach(c => {
+                    txSel.innerHTML += `<option value="${c.id}">[${c.id}] ${c.name} (Stock: ${c.quantity} ${c.unit})</option>`;
+                });
+
+                populateConsumableHistoricalDatalist();
+                applyFilters();
+            } catch (err) {
+                console.error("Failed to load consumables", err);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const res = await fetch('/api/consumables/transactions');
+                allTransactions = await res.json();
+                applyFilters();
+            } catch (err) {
+                console.error("Failed to load consumable transactions", err);
+            }
+        }
+
+        // Filters by Name, Code, Project/Program, Category, Storage Location (Requirement 86)
+        function applyFilters() {
+            const nameQ = document.getElementById('filterName').value.toLowerCase().trim();
+            const codeQ = document.getElementById('filterCode').value.toLowerCase().trim();
+            const projQ = (document.getElementById('filterProject') ? document.getElementById('filterProject').value : '').toLowerCase().trim();
+            const cat = document.getElementById('filterCategory').value;
+            const loc = document.getElementById('filterLocation').value;
+            const status = document.getElementById('filterStatus').value;
+
+            if (activeView === 'balance') {
+                let filtered = allConsumables.filter(item => {
+                    const matchesName = !nameQ || item.name.toLowerCase().includes(nameQ) || (item.specification || '').toLowerCase().includes(nameQ);
+                    const matchesCode = !codeQ || item.id.toLowerCase().includes(codeQ);
+                    const itemProj = (item.project || 'Radar EW Facility Project').toLowerCase();
+                    const matchesProj = !projQ || itemProj === projQ;
+                    const matchesCat = !cat || item.category === cat;
+                    const matchesLoc = !loc || (item.location || '').toLowerCase() === loc.toLowerCase();
+
+                    let itemStatus = 'good';
+                    if (item.quantity <= 0) itemStatus = 'depleted';
+                    else if (item.quantity <= item.min_stock) itemStatus = 'low';
+                    const matchesStatus = !status || itemStatus === status;
+
+                    return matchesName && matchesCode && matchesProj && matchesCat && matchesLoc && matchesStatus;
+                });
+
+                // Default sort descending by Date (Req 80)
+                filtered.sort((a, b) => {
+                    const da = a.date_time || a.last_restocked || '';
+                    const db = b.date_time || b.last_restocked || '';
+                    return sortDateDesc ? db.localeCompare(da) : da.localeCompare(db);
+                });
+
+                renderBalanceTable(filtered);
+            } else {
+                let filteredTxs = allTransactions.filter(tx => {
+                    const matchesName = !nameQ || (tx.consumable_name || '').toLowerCase().includes(nameQ);
+                    const matchesCode = !codeQ || (tx.consumable_id || '').toLowerCase().includes(codeQ);
+                    const txProj = (tx.project || 'Radar EW Facility Project').toLowerCase();
+                    const matchesProj = !projQ || txProj === projQ;
+                    const matchesCat = !cat || tx.category === cat;
+                    const matchesLoc = !loc || (tx.location || '').toLowerCase() === loc.toLowerCase();
+                    return matchesName && matchesCode && matchesProj && matchesCat && matchesLoc;
+                });
+
+                function txPriority(t) {
+                    const tt = (t.tx_type || '').toUpperCase();
+                    if (tt.includes('INITIAL')) return 0;
+                    if (tt.includes('IN') || tt.includes('RESTOCK') || tt.includes('PURCHASE')) return 1;
+                    if (tt.includes('ADJUST') || tt.includes('COUNT') || tt.includes('SET') || tt.includes('OPNAME')) return 2;
+                    return 3;
+                }
+
+                filteredTxs.sort((a, b) => {
+                    const da = a.date_time || '';
+                    const db = b.date_time || '';
+                    const dateCmp = da.localeCompare(db);
+                    if (dateCmp !== 0) {
+                        return sortDateDesc ? -dateCmp : dateCmp;
+                    }
+                    const pa = txPriority(a);
+                    const pb = txPriority(b);
+                    if (pa !== pb) {
+                        return sortDateDesc ? (pb - pa) : (pa - pb);
+                    }
+                    return sortDateDesc ? (b.id - a.id) : (a.id - b.id);
+                });
+
+                renderLedgerTable(filteredTxs);
+            }
+        }
+
+        function renderBalanceTable(items) {
+            const tbody = document.getElementById('balanceTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('displayedCount').innerText = items.length;
+            document.getElementById('totalCount').innerText = allConsumables.length;
+
+            let totalVal = 0;
+            const allTotalVal = allConsumables.reduce((acc, x) => acc + ((x.balance !== undefined ? x.balance : x.quantity) * (x.unit_price || 0)), 0);
+
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:20px; color:var(--text-muted);">No consumable items found matching filter criteria.</td></tr>';
+                const lblEl = document.getElementById('totalExpensesLabel');
+                if (lblEl) lblEl.innerText = "Total Inventory Value:";
+                document.getElementById('totalStockValue').innerText = formatIDR(allTotalVal);
+                const subEl = document.getElementById('subtotalStockValue');
+                if (subEl) subEl.innerText = '0';
+                const pctEl = document.getElementById('consPctDisplay');
+                if (pctEl) {
+                    pctEl.innerText = '0.0%';
+                    pctEl.title = `Subtotal 0 IDR of Total ${formatIDR(allTotalVal)} IDR (0.0%)`;
+                }
+                return;
+            }
+
+            items.forEach(it => {
+                const itemTotal = (it.balance !== undefined ? it.balance : it.quantity) * (it.unit_price || 0);
+                totalVal += itemTotal;
+
+                let badge = '<span class="badge-stock stock-good">In Stock</span>';
+                if (it.quantity <= 0) {
+                    badge = '<span class="badge-stock stock-depleted">Depleted</span>';
+                } else if (it.quantity <= it.min_stock) {
+                    badge = `<span class="badge-stock stock-low">Low (${it.quantity}/${it.min_stock})</span>`;
+                }
+
+                const totalIn = it.total_in !== undefined ? it.total_in : it.quantity;
+                const totalOut = it.total_out !== undefined ? it.total_out : 0;
+                const balance = it.balance !== undefined ? it.balance : it.quantity;
+
+                const authRole = localStorage.getItem('auth-role') || 'guest';
+                const canManageCons = (authRole === 'superadmin' || authRole === 'admin');
+                const adminConsBtns = canManageCons ? `
+                    <button class="btn-action-small" onclick="openEditConsumableModal('${it.id}')" style="color:var(--accent); border-color:var(--accent); margin-left:4px;" title="Edit / Rename Material">Edit</button>
+                    <button class="btn-action-small" onclick="deleteConsumableItem('${it.id}')" style="color:#cf222e; border-color:#cf222e; margin-left:4px;" title="Delete Record">Delete</button>
+                ` : '';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align:center; font-weight:bold; color:var(--text-muted);">${items.indexOf(it) + 1}</td>
+                    <td><span style="font-weight:bold; color:var(--text-muted);">${it.date_time || it.last_restocked || '-'}</span></td>
+                    <td><strong>${it.id}</strong></td>
+                    <td>
+                        <strong>${it.name}</strong><br>
+                        <small style="color:var(--text-muted);">${it.specification || '-'}</small><br>
+                        <span style="font-size:0.7rem; color:var(--link-color); font-weight:600;">📁 ${it.project || 'Radar EW Facility Project'}</span>
+                    </td>
+                    <td><span style="background:var(--tag-bg); padding:2px 6px; border-radius:4px; font-size:0.75rem;">${it.category}</span></td>
+                    <td>${it.location || '-'}</td>
+                    <td class="credit-qty">+${formatNumber(totalIn)}</td>
+                    <td class="debit-qty">-${formatNumber(totalOut)}</td>
+                    <td class="balance-qty">${formatNumber(balance)}</td>
+                    <td>${it.unit}</td>
+                    <td style="text-align:right;">${formatIDR(it.unit_price)}</td>
+                    <td style="text-align:right; font-weight:bold; color:var(--accent);">${formatIDR(itemTotal)}</td>
+                    <td>${badge}</td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <button class="btn-action-small" onclick="quickLogTx('${it.id}')" title="Log Transaction">Log</button>
+                        ${adminConsBtns}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const subtotalVal = totalVal;
+            const pct = (allTotalVal > 0) ? ((subtotalVal / allTotalVal) * 100).toFixed(1) : "0.0";
+
+            const lblEl = document.getElementById('totalExpensesLabel');
+            if (lblEl) lblEl.innerText = "Total Inventory Value:";
+            document.getElementById('totalStockValue').innerText = formatIDR(allTotalVal);
+            const subEl = document.getElementById('subtotalStockValue');
+            if (subEl) subEl.innerText = formatIDR(subtotalVal);
+            const pctEl = document.getElementById('consPctDisplay');
+            if (pctEl) {
+                pctEl.innerText = `${pct}%`;
+                pctEl.title = `Subtotal ${formatIDR(subtotalVal)} IDR of Total ${formatIDR(allTotalVal)} IDR (${pct}%)`;
+            }
+        }
+
+        function renderLedgerTable(txs) {
+            const tbody = document.getElementById('ledgerTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('displayedCount').innerText = txs.length;
+            document.getElementById('totalCount').innerText = allTransactions.length;
+
+            let totalExp = 0;
+            const allTotalExp = allTransactions.reduce((acc, x) => acc + (x.expense_amount || 0), 0);
+
+            if (txs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px; color:var(--text-muted);">No stock movements recorded yet.</td></tr>';
+                const lblEl = document.getElementById('totalExpensesLabel');
+                if (lblEl) lblEl.innerText = "Total Movement Expenses:";
+                document.getElementById('totalStockValue').innerText = formatIDR(allTotalExp);
+                const subEl = document.getElementById('subtotalStockValue');
+                if (subEl) subEl.innerText = '0';
+                const pctEl = document.getElementById('consPctDisplay');
+                if (pctEl) {
+                    pctEl.innerText = '0.0%';
+                    pctEl.title = `Subtotal 0 IDR of Total ${formatIDR(allTotalExp)} IDR (0.0%)`;
+                }
+                return;
+            }
+
+            txs.forEach(t => {
+                totalExp += (t.expense_amount || 0);
+
+                const inStr = (t.stock_in > 0) ? `+${formatNumber(t.stock_in)}` : '-';
+                const outStr = (t.stock_out > 0) ? `-${formatNumber(t.stock_out)}` : '-';
+                const inClass = (t.stock_in > 0) ? 'credit-qty' : '';
+                const outClass = (t.stock_out > 0) ? 'debit-qty' : '';
+
+                const authRole = localStorage.getItem('auth-role') || 'guest';
+                const canManageConsLog = (authRole === 'superadmin' || authRole === 'admin');
+                const adminDelLogBtn = canManageConsLog ? `
+                    <div style="display:flex; gap:4px; justify-content:center;">
+                        <button class="btn-action-small" onclick="openEditConsumableTxModal(${t.id})" style="color:var(--accent); border-color:var(--accent);" title="Edit Log">Edit</button>
+                        <button class="btn-action-small" onclick="deleteConsumableTx(${t.id})" style="color:#cf222e; border-color:#cf222e;" title="Delete Log">Delete</button>
+                    </div>
+                ` : '-';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align:center; font-weight:bold; color:var(--text-muted);">${txs.indexOf(t) + 1}</td>
+                    <td><span style="font-weight:bold;">${t.date_time || '-'}</span></td>
+                    <td><strong>${t.consumable_id}</strong></td>
+                    <td><strong>${t.consumable_name || '-'}</strong></td>
+                    <td><span style="background:var(--tag-bg); padding:2px 6px; border-radius:4px; font-size:0.75rem;">${t.tx_type}</span></td>
+                    <td class="${inClass}" style="text-align:right;">${inStr}</td>
+                    <td class="${outClass}" style="text-align:right;">${outStr}</td>
+                    <td class="balance-qty">${formatNumber(t.balance_after)}</td>
+                    <td>${t.unit || 'Pcs'}</td>
+                    <td style="text-align:right; font-weight:bold;">${formatIDR(t.expense_amount)}</td>
+                    <td><strong>${t.pic || '-'}</strong></td>
+                    <td class="col-purpose">${t.purpose || '-'} <small style="color:var(--link-color); font-weight:600;">[${t.project || 'Radar EW Facility Project'}]</small></td>
+                    <td style="text-align:center;">${adminDelLogBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const subtotalExp = totalExp;
+            const pct = (allTotalExp > 0) ? ((subtotalExp / allTotalExp) * 100).toFixed(1) : "0.0";
+
+            const lblEl = document.getElementById('totalExpensesLabel');
+            if (lblEl) lblEl.innerText = "Total Movement Expenses:";
+            document.getElementById('totalStockValue').innerText = formatIDR(allTotalExp);
+            const subEl = document.getElementById('subtotalStockValue');
+            if (subEl) subEl.innerText = formatIDR(subtotalExp);
+            const pctEl = document.getElementById('consPctDisplay');
+            if (pctEl) {
+                pctEl.innerText = `${pct}%`;
+                pctEl.title = `Subtotal ${formatIDR(subtotalExp)} IDR of Total ${formatIDR(allTotalExp)} IDR (${pct}%)`;
+            }
+        }
+
+
+        async function deleteConsumableItem(cid) {
+            const role = localStorage.getItem('auth-role') || 'guest';
+            if (role !== 'superadmin' && role !== 'admin') return;
+            if (!confirm(`Delete consumable item [${cid}] and its movement logs?`)) return;
+            try {
+                const res = await fetch(`/api/consumables/${encodeURIComponent(cid)}?role=${encodeURIComponent(role)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadConsumables();
+                    if (activeView === 'ledger') await loadTransactions();
+                } else {
+                    const d = await res.json();
+                    alert("Failed to delete consumable: " + (d.detail || ""));
+                }
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function deleteConsumableTx(txId) {
+            const role = localStorage.getItem('auth-role') || 'guest';
+            if (role !== 'superadmin' && role !== 'admin') return;
+            if (!confirm(`Delete consumable transaction log #${txId}?`)) return;
+            try {
+                const res = await fetch(`/api/consumables/transactions/${txId}?role=${encodeURIComponent(role)}`, { method: 'DELETE' });
+                if (res.ok) {
+                    await loadConsumables();
+                    await loadTransactions();
+                } else {
+                    const d = await res.json();
+                    alert("Failed to delete consumable transaction: " + (d.detail || ""));
+                }
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        function openEditConsumableModal(cid) {
+            const item = allConsumables.find(x => x.id === cid);
+            if (!item) return;
+
+            document.getElementById('ecCid').value = item.id;
+            document.getElementById('ecCidDisplay').innerText = item.id;
+            document.getElementById('ecName').value = item.name || '';
+            document.getElementById('ecSpec').value = item.specification || '';
+            document.getElementById('ecCategory').value = item.category || 'Consumables';
+            document.getElementById('ecUnit').value = item.unit || 'Pcs';
+            document.getElementById('ecMinStock').value = item.min_stock !== undefined ? item.min_stock : 3;
+            document.getElementById('ecUnitPrice').value = item.unit_price || 0;
+            document.getElementById('ecLocation').value = item.location || '';
+            document.getElementById('ecProject').value = item.project || 'Radar EW Facility Project';
+
+            document.getElementById('editConsumableModal').style.display = 'flex';
+        }
+
+        function closeEditConsumableModal() {
+            document.getElementById('editConsumableModal').style.display = 'none';
+        }
+
+        async function saveEditConsumable(event) {
+            event.preventDefault();
+            const cid = document.getElementById('ecCid').value;
+            const authRole = localStorage.getItem('auth-role') || 'superadmin';
+            const fd = new FormData();
+            fd.append('name', document.getElementById('ecName').value.trim());
+            fd.append('specification', document.getElementById('ecSpec').value.trim());
+            fd.append('category', document.getElementById('ecCategory').value);
+            fd.append('unit', document.getElementById('ecUnit').value.trim());
+            fd.append('min_stock', document.getElementById('ecMinStock').value);
+            fd.append('unit_price', document.getElementById('ecUnitPrice').value);
+            fd.append('location', document.getElementById('ecLocation').value.trim());
+            fd.append('project', document.getElementById('ecProject').value.trim());
+            fd.append('role', authRole);
+
+            try {
+                const res = await fetch(`/api/consumables/${encodeURIComponent(cid)}`, {
+                    method: 'PUT',
+                    body: fd
+                });
+                const resData = await res.json();
+                if (res.ok) {
+                    alert("Material details and typos updated successfully!");
+                    closeEditConsumableModal();
+                    await loadConsumables();
+                    if (activeView === 'ledger') await loadTransactions();
+                } else {
+                    alert("Update failed: " + (resData.detail || "Server rejected request."));
+                }
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function openEditConsumableTxModal(txId) {
+            const tx = allTransactions.find(x => x.id === txId);
+            if (!tx) return;
+
+            document.getElementById('ectTxId').value = tx.id;
+            document.getElementById('ectTxIdDisplay').innerText = tx.id;
+            document.getElementById('ectItemDisplay').value = `${tx.consumable_name || ''} [${tx.consumable_id}]`;
+            document.getElementById('ectDateTime').value = tx.date_time || '';
+            document.getElementById('ectTxType').value = tx.tx_type || 'Stock IN (Restock)';
+            document.getElementById('ectQty').value = tx.quantity || 1;
+            document.getElementById('ectPic').value = tx.pic || '';
+            document.getElementById('ectProject').value = tx.project || 'Radar EW Facility Project';
+            document.getElementById('ectPurpose').value = tx.purpose || '';
+
+            document.getElementById('editConsumableTxModal').style.display = 'flex';
+        }
+
+        function closeEditConsumableTxModal() {
+            document.getElementById('editConsumableTxModal').style.display = 'none';
+        }
+
+        async function saveEditConsumableTx(event) {
+            event.preventDefault();
+            const txId = document.getElementById('ectTxId').value;
+            const authRole = localStorage.getItem('auth-role') || 'superadmin';
+            const fd = new FormData();
+            fd.append('date_time', document.getElementById('ectDateTime').value.trim());
+            fd.append('tx_type', document.getElementById('ectTxType').value);
+            fd.append('quantity', document.getElementById('ectQty').value);
+            fd.append('pic', document.getElementById('ectPic').value.trim());
+            fd.append('project', document.getElementById('ectProject').value.trim());
+            fd.append('purpose', document.getElementById('ectPurpose').value.trim());
+            fd.append('role', authRole);
+
+            try {
+                const res = await fetch(`/api/consumables/transactions/${txId}`, {
+                    method: 'PUT',
+                    body: fd
+                });
+                const resData = await res.json();
+                if (res.ok) {
+                    alert("Movement log updated successfully!");
+                    closeEditConsumableTxModal();
+                    await loadConsumables();
+                    await loadTransactions();
+                } else {
+                    alert("Update failed: " + (resData.detail || "Server rejected request."));
+                }
+            } catch(e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('filterName').value = '';
+            document.getElementById('filterCode').value = '';
+            if (document.getElementById('filterProject')) document.getElementById('filterProject').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterLocation').value = '';
+            document.getElementById('filterStatus').value = '';
+            applyFilters();
+        }
+
+        function handleTxFilterProjectChange() {
+            const selectedProj = document.getElementById('txFilterProject').value;
+            const txSel = document.getElementById('txConsumableId');
+            const curVal = txSel.value;
+            txSel.innerHTML = '<option value="">-- Choose Consumable Item --</option>';
+            let items = allConsumables;
+            if (selectedProj) {
+                items = allConsumables.filter(c => (c.project || 'Radar EW Facility Project') === selectedProj);
+            }
+            items.forEach(c => {
+                txSel.innerHTML += `<option value="${c.id}">[${c.id}] ${c.name} (Stock: ${c.quantity} ${c.unit})</option>`;
+            });
+            if (curVal && items.some(c => c.id === curVal)) {
+                txSel.value = curVal;
+            } else {
+                txSel.value = '';
+            }
+            updateSelectedConsumablePreview();
+        }
+
+        function quickLogTx(cid) {
+            openConsumableTxModal();
+            const item = allConsumables.find(c => c.id === cid);
+            if (item && item.project) {
+                if (document.getElementById('txFilterProject')) {
+                    document.getElementById('txFilterProject').value = item.project;
+                    handleTxFilterProjectChange();
+                }
+                if (document.getElementById('txProject')) {
+                    document.getElementById('txProject').value = item.project;
+                }
+            }
+            document.getElementById('txConsumableId').value = cid;
+            updateSelectedConsumablePreview();
+        }
+
+        function openConsumableTxModal() {
+            const now = new Date();
+            const Y = now.getFullYear();
+            const M = String(now.getMonth() + 1).padStart(2, '0');
+            const D = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('txDateTime').value = `${Y}-${M}-${D} ${h}:${m}`;
+            document.getElementById('txQuantity').value = '1';
+            document.getElementById('txPic').value = '';
+            document.getElementById('txPurpose').value = '';
+            if (document.getElementById('txFilterProject')) {
+                document.getElementById('txFilterProject').value = '';
+                handleTxFilterProjectChange();
+            }
+            document.getElementById('consumableTxModal').classList.add('open');
+            updateSelectedConsumablePreview();
+        }
+
+        function closeConsumableTxModal() {
+            document.getElementById('consumableTxModal').classList.remove('open');
+        }
+
+        function updateSelectedConsumablePreview() {
+            const cid = document.getElementById('txConsumableId').value;
+            const item = allConsumables.find(x => x.id === cid);
+            if (item) {
+                document.getElementById('prevStock').innerText = `${formatNumber(item.quantity)} ${item.unit}`;
+                document.getElementById('prevLocation').innerText = item.location || '-';
+                document.getElementById('prevProject').innerText = item.project || 'Radar EW Facility Project';
+                if (document.getElementById('txProject') && !document.getElementById('txProject').value) {
+                    document.getElementById('txProject').value = item.project || 'Radar EW Facility Project';
+                }
+            } else {
+                document.getElementById('prevStock').innerText = '-';
+                document.getElementById('prevLocation').innerText = '-';
+                document.getElementById('prevProject').innerText = '-';
+            }
+        }
+
+        async function handleConsumableTxSubmit(e) {
+            e.preventDefault();
+            const cid = document.getElementById('txConsumableId').value;
+            const type = document.getElementById('txType').value;
+            const qty = (document.getElementById('txQuantity').value || '0').replace(/,/g, '');
+            const pic = document.getElementById('txPic').value.trim();
+            const dt = document.getElementById('txDateTime').value.trim();
+            const proj = document.getElementById('txProject').value.trim();
+            const purp = document.getElementById('txPurpose').value.trim();
+
+            if (!cid) {
+                alert("Please select a consumable item.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('consumable_id', cid);
+            fd.append('tx_type', type);
+            fd.append('quantity', qty);
+            fd.append('pic', pic);
+            fd.append('date_time', dt);
+            fd.append('project', proj);
+            fd.append('purpose', purp);
+
+            try {
+                const res = await fetch('/api/consumables/transaction', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Transaction recorded successfully!");
+                    closeConsumableTxModal();
+                    await loadConsumables();
+                    if (activeView === 'ledger') await loadTransactions();
+                } else {
+                    alert("Error: " + (data.detail || "Failed to log transaction."));
+                }
+            } catch (err) {
+                alert("Network error: " + err.message);
+            }
+        }
+
+        // --- 120+ STANDARD MATERIALS & CONSUMABLES PRACTICE CATALOG ---
+        const STANDARD_CONSUMABLES_PRACTICE_NAMES = [
+            // Soldering & Chemical Consumables
+            "Lead-Free Solder Wire SAC305", "63/37 Tin-Lead Rosin Core Solder Wire",
+            "Low-Temperature Solder Wire Sn42Bi58", "Solder Paste (SAC305 No-Clean)",
+            "Solder Paste (Sn42Bi58 Low Melting Temp)", "Solder Paste Flux (Gel Syringe)",
+            "Rosin Soldering Flux Paste", "No-Clean Liquid Flux Pen", "BGA Tack Flux Gel",
+            "Desoldering Braid / Wick 1.5mm", "Desoldering Braid / Wick 2.5mm", "Desoldering Braid / Wick 3.0mm",
+            "Soldering Iron Tip Tinner & Cleaner", "Replacement Soldering Iron Tip",
+            "Isopropyl Alcohol 99.9% (IPA)", "PCB Flux Remover / Solvent Cleaner",
+            "Electronic Contact Cleaner Spray", "Silicone Heat Sink Compound / Thermal Paste",
+            "Non-Silicone High Thermal Conductivity Paste", "Thermal Conductive Silicone Pad 0.5mm",
+            "Thermal Conductive Silicone Pad 1.0mm", "Thermal Conductive Silicone Pad 2.0mm",
+            "Polyurethane Conformal Coating Spray", "Silicone Conformal Coating", "Acrylic Conformal Coating",
+            "Lint-Free Cleanroom Wipes 9x9", "Precision Cotton Swabs (Pointed Tip)",
+            "Anti-Static ESD Cleaning Brush", "Cellulose Sponge for Soldering Iron",
+            "Brass Wire Sponge for Soldering Iron Tip",
+
+            // Tapes & Adhesives
+            "Kapton Polyimide High-Temp Tape 10mm", "Kapton Polyimide High-Temp Tape 20mm",
+            "Kapton Polyimide High-Temp Tape 50mm", "High-Temp Silicone Masking Tape",
+            "PVC Electrical Insulation Tape (Black)", "PVC Electrical Insulation Tape (Assorted Colors)",
+            "Thermal Conductive Adhesive Tape (Double Sided)", "Copper Foil Shielding Tape (Conductive Adhesive)",
+            "Aluminum Foil Shielding Tape", "Acetate Cloth Insulating Tape",
+            "Self-Amalgamating Waterproof Silicone Tape", "Cyanoacrylate Super Glue (Fast Cure)",
+            "2-Part Epoxy Resin Adhesive (5-Minute Cure)", "RTV Silicone Sealant Adhesive (Clear)",
+            "RTV Silicone Sealant Adhesive (Black)", "Threadlocker Blue (Medium Strength Removable)",
+            "Threadlocker Red (High Strength Permanent)", "Hot Melt Glue Sticks 11mm (Standard Clear)",
+            "Hot Melt Glue Sticks 11mm (High-Temp Black)", "Anti-Seize Lubricant Paste",
+            "Silicone Dielectric Grease", "WD-40 Specialist Fast-Drying Contact Cleaner",
+
+            // RF Cables, Connectors & Hardware
+            "SMA Male Dust Caps (Brass Gold-Plated)", "SMA Female Dust Caps with Chain",
+            "N-Type Male Protective Dust Caps", "N-Type Female Protective Dust Caps",
+            "BNC Male Protective Caps", "BNC Female Protective Caps", "TNC Male Protective Caps",
+            "SMA Male to SMA Male Coaxial Cable RG-316", "SMA Male to SMA Female Coaxial Cable RG-316",
+            "SMA Male to N-Type Male Cable RG-142 High Power", "RG-402 Semi-Rigid Coaxial Cable 50 Ohm",
+            "RG-405 Formable Micro-Coaxial Cable", "Sucoform 141 High Frequency Microwave Cable",
+            "SMA-to-SMA Female-Female Barrel Adapter", "SMA-to-BNC Male-Female Adapter",
+            "SMA-to-N Type Male-Female Adapter", "SMA Fixed Attenuator 3dB 50 Ohm 2W",
+            "SMA Fixed Attenuator 6dB 50 Ohm 2W", "SMA Fixed Attenuator 10dB 50 Ohm 2W",
+            "SMA Fixed Attenuator 20dB 50 Ohm 2W", "SMA Fixed Attenuator 30dB 50 Ohm 5W",
+            "SMA 50 Ohm RF Termination Dummy Load 1W", "SMA 50 Ohm RF Termination Dummy Load 2W",
+            "SMA Female Bulkhead Jack Crimp Connector", "SMA Male Straight Crimp Connector RG-316",
+            "SMA PCB Edge Mount Launch Connector", "U.FL (IPEX) to SMA Female Pigtail Cable",
+
+            // Wiring, Sleeving & Cable Management
+            "Heat Shrink Tubing 1.5mm (Black)", "Heat Shrink Tubing 2.5mm (Black)",
+            "Heat Shrink Tubing 3.5mm (Black)", "Heat Shrink Tubing 5.0mm (Black)",
+            "Heat Shrink Tubing 7.0mm (Black)", "Dual-Wall Adhesive Lined Heat Shrink 3:1 (4mm)",
+            "Dual-Wall Adhesive Lined Heat Shrink 3:1 (8mm)", "Heat Shrink Solder Seal Butt Wire Connectors",
+            "Silicone Flexible Stranded Wire 20AWG (Red/Black)", "Silicone Flexible Stranded Wire 22AWG (Red/Black)",
+            "Silicone Flexible Stranded Wire 26AWG (Red/Black)", "Teflon (PTFE) Insulated Wire 24AWG",
+            "10-Conductor Flat Ribbon Cable 1.27mm Pitch", "Breadboard Jumper Wires (Male-to-Male 20cm)",
+            "Breadboard Jumper Wires (Male-to-Female 20cm)", "Breadboard Jumper Wires (Female-to-Female 20cm)",
+            "Nylon Cable Ties (Zip Ties) 100mm", "Nylon Cable Ties (Zip Ties) 150mm",
+            "Nylon Cable Ties (Zip Ties) 200mm", "Self-Adhesive Cable Tie Mounting Bases 20x20mm",
+            "Spiral Wrap Wire Loom Sleeve 6mm", "Expandable Braided PET Cable Sleeving 8mm",
+            "Split Wire Loom Tubing 10mm", "Snap-On Ferrite Core Noise Suppressor (5mm)",
+            "Snap-On Ferrite Core Noise Suppressor (9mm)", "Insulated Bootlace Ferrule Terminals Assortment",
+            "Fork and Ring Crimp Terminals Assortment",
+
+            // Prototyping Materials & Electronic Components
+            "PLA 3D Printer Filament 1.75mm (Black)", "PLA 3D Printer Filament 1.75mm (White)",
+            "PLA 3D Printer Filament 1.75mm (Grey)", "PETG 3D Printer Filament 1.75mm (Black)",
+            "ABS 3D Printer Filament 1.75mm (Black)", "UV Photosensitive Resin 405nm (Standard Grey)",
+            "Single-Sided FR4 Copper Clad Board (10x15cm)", "Double-Sided FR4 Copper Clad Board (10x15cm)",
+            "Universal Prototype PCB Stripboard (5x7cm)", "Universal Prototype PCB Stripboard (7x9cm)",
+            "Solderless Breadboard 830 Tie-Points", "Solderless Breadboard 400 Tie-Points",
+            "2.54mm Pitch Male Breakable Pin Headers", "2.54mm Pitch Female Breakable Pin Headers",
+            "Screw Terminal Blocks 2-Pin 5.08mm Pitch", "Screw Terminal Blocks 3-Pin 5.08mm Pitch",
+            "Tactile Push Button Switches 6x6mm", "Slide Toggle Switches SPDT",
+            "CR2032 3V Lithium Coin Cell Batteries", "AAA 1.5V Alkaline Batteries",
+            "AA 1.5V Alkaline Batteries", "9V Alkaline Batteries",
+
+            // Fasteners & Mechanical Hardware
+            "M2 Stainless Steel Hex Socket Screws & Nuts Kit", "M2.5 Stainless Steel Screws & Stand-offs Kit",
+            "M3 Stainless Steel Button Head Screws & Nuts Kit", "M4 Machine Screws & Hex Nuts Assortment",
+            "M3 Hex Brass Male-Female Standoff Spacers Kit", "Nylon Screws, Nuts & Washers Kit (M3 Non-Conductive)",
+            "Stainless Steel Spring Lock Washers Assortment", "Silicone O-Rings Assortment Kit",
+            "Self-Tapping Small Electronics Screws Kit",
+
+            // Safety & Personal Protective Equipment (PPE)
+            "Nitrile Gloves Powder-Free (Size M)", "Nitrile Gloves Powder-Free (Size L)",
+            "ESD Anti-Static Carbon Fiber Palm Fit Gloves (Size M)", "ESD Anti-Static Carbon Fiber Palm Fit Gloves (Size L)",
+            "Adjustable ESD Anti-Static Wrist Strap", "Anti-Static ESD Grounding Cord with Crocodile Clip",
+            "Disposable Particle Respirator Mask N95", "Safety Goggles with Anti-Fog Clear Lens",
+            "Ultra-Pure Compressed Air Duster Spray (Gas Can)"
+        ];
+
+        function populateConsumableHistoricalDatalist() {
+            const datalist = document.getElementById('historicalConsumableNamesDatalist');
+            if (!datalist) return;
+            const dbNames = (allConsumables || []).map(c => c.name).filter(Boolean);
+            const combined = [...new Set([...dbNames, ...STANDARD_CONSUMABLES_PRACTICE_NAMES])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            datalist.innerHTML = '';
+            combined.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n;
+                datalist.appendChild(opt);
+            });
+        }
+
+        // --- MATERIALS ID AUTO-GENERATION HELPERS (2-Digit Category + 3-Digit Name + 5-Digit Sequence) ---
+        const CONSUMABLE_CATEGORY_ACRONYMS = {
+            "CHEMICALS & SOLDERING": "CS",
+            "CHEMICALS": "CS",
+            "SOLDERING": "SL",
+            "TAPES & ADHESIVES": "TA",
+            "ADHESIVES": "TA",
+            "WIRING & SLEEVING": "WS",
+            "WIRING": "WS",
+            "SAFETY & PPE": "SF",
+            "SAFETY": "SF",
+            "HARDWARE & FASTENERS": "HF",
+            "HARDWARE": "HF",
+            "PROTOTYPING & MATERIALS": "PM",
+            "PROTOTYPING": "PR",
+            "RF CABLES": "RF",
+            "RF CONNECTORS": "RC",
+            "CABLES": "CB",
+            "INSTRUMENTATION": "IN",
+            "TOOLS": "TL",
+            "EQUIPMENT": "EQ",
+            "MACHINERY": "MC",
+            "CONSUMABLES": "CS"
+        };
+
+        const CONSUMABLE_NAME_ACRONYMS = {
+            "SOLDER WIRE": "SLD",
+            "LEAD-FREE SOLDER WIRE": "SLD",
+            "63/37 TIN-LEAD SOLDER WIRE": "SLD",
+            "SOLDER PASTE": "SLP",
+            "SOLDER PASTE FLUX": "FLX",
+            "FLUX": "FLX",
+            "LIQUID FLUX": "FLX",
+            "BGA TACK FLUX GEL": "FLX",
+            "DESOLDERING BRAID": "DSB",
+            "DESOLDERING BRAID / WICK": "DSB",
+            "ISOPROPYL ALCOHOL": "ISO",
+            "ISOPROPYL ALCOHOL 99%": "ISO",
+            "ISOPROPYL ALCOHOL 99.9%": "ISO",
+            "CLEANROOM WIPES": "WIP",
+            "LINT-FREE CLEANROOM WIPES": "WIP",
+            "KAPTON TAPE": "KAP",
+            "HIGH-TEMP MASKING TAPE": "MSK",
+            "ELECTRICAL TAPE": "ELT",
+            "THERMAL PASTE": "THP",
+            "THERMAL GREASE / PASTE": "THP",
+            "THERMAL CONDUCTIVE PAD": "THD",
+            "HEAT SHRINK TUBING": "HST",
+            "CABLE TIES": "ZPT",
+            "NYLON CABLE TIES": "ZPT",
+            "SILICONE STRANDED WIRE": "WIR",
+            "BREADBOARD JUMPER WIRES": "JMP",
+            "3D PRINT FILAMENT": "PLA",
+            "PLA 3D PRINTER FILAMENT": "PLA",
+            "PETG 3D PRINTER FILAMENT": "PTG",
+            "ABS 3D PRINTER FILAMENT": "ABS",
+            "UV CURING RESIN": "RSN",
+            "COPPER CLAD PCB": "PCB",
+            "SOLDERLESS BREADBOARD": "BRD",
+            "DUST CAPS": "SMA",
+            "SMA DUST CAPS": "SMA",
+            "COAXIAL DUST CAPS": "SMA",
+            "SMA COAXIAL DUST CAPS": "SMA",
+            "RF COAXIAL CABLE": "RFC",
+            "RG-316 COAXIAL CABLE": "RFC",
+            "SMA ATTENUATOR": "ATN",
+            "SMA ADAPTER": "ADP",
+            "50 OHM RF TERMINATION LOAD": "TRM",
+            "ANTI-STATIC GLOVES": "ESD",
+            "NITRILE GLOVES": "GLV",
+            "SAFETY GOGGLES": "GOG",
+            "CYANOACRYLATE SUPER GLUE": "GLU",
+            "EPOXY RESIN ADHESIVE": "EPX",
+            "THREADLOCKER": "LOX",
+            "CONTACT CLEANER": "CLN",
+            "ELECTRONIC CONTACT CLEANER": "CLN",
+            "AIR DUSTER COMPRESSED GAS": "AIR",
+            "M3 SCREWS & NUTS KIT": "SCR",
+            "BRASS STANDOFF SPACERS": "STF"
+        };
+
+        function computeConsCategoryAcronym(cat) {
+            const cleaned = (cat || '').trim().toUpperCase();
+            if (CONSUMABLE_CATEGORY_ACRONYMS[cleaned]) return CONSUMABLE_CATEGORY_ACRONYMS[cleaned];
+            for (const [k, v] of Object.entries(CONSUMABLE_CATEGORY_ACRONYMS)) {
+                if (cleaned.includes(k) || k.includes(cleaned)) return v;
+            }
+            const words = cleaned.split(/[\s&/,\_-]+/).filter(Boolean);
+            if (words.length >= 2) {
+                return (words[0][0] + words[1][0]).toUpperCase();
+            } else if (words.length === 1 && words[0].length >= 2) {
+                return words[0].slice(0, 2).toUpperCase();
+            }
+            return "CS";
+        }
+
+        function computeConsNameAcronym(name) {
+            const cleaned = (name || '').trim().toUpperCase();
+            if (CONSUMABLE_NAME_ACRONYMS[cleaned]) return CONSUMABLE_NAME_ACRONYMS[cleaned];
+            let bestKey = null;
+            let bestVal = null;
+            for (const [k, v] of Object.entries(CONSUMABLE_NAME_ACRONYMS)) {
+                if (cleaned.includes(k)) {
+                    if (!bestKey || k.length > bestKey.length) {
+                        bestKey = k;
+                        bestVal = v;
+                    }
+                }
+            }
+            if (bestVal) return bestVal;
+
+            const stopWords = new Set(['AND', 'THE', 'OF', 'FOR', 'WITH', 'IN', 'TO']);
+            const words = cleaned.split(/[\s&/,\_-]+/).filter(w => w && !stopWords.has(w));
+            if (words.length >= 3) {
+                return (words[0][0] + words[1][0] + words[2][0]).toUpperCase();
+            } else if (words.length === 2) {
+                const w1 = words[0];
+                const w2 = words[1];
+                const c2 = w2.length >= 2 ? w2.slice(0, 2) : (w2 + 'X').slice(0, 2);
+                return (w1[0] + c2).toUpperCase();
+            } else if (words.length === 1) {
+                const w = words[0];
+                if (w.length >= 3) return w.slice(0, 3).toUpperCase();
+                return (w + 'XXX').slice(0, 3).toUpperCase();
+            }
+            return "MAT";
+        }
+
+        function getNextMaterialId(name, category) {
+            const catCode = computeConsCategoryAcronym(category || 'Chemicals & Soldering');
+            const nameCode = computeConsNameAcronym(name || 'Material');
+            const prefix = `${catCode}-${nameCode}-`;
+
+            let maxSeq = 0;
+            const existing = (allConsumables || []).map(c => (c.id || '').toUpperCase().trim());
+            for (const eid of existing) {
+                if (eid.startsWith(prefix)) {
+                    const suffix = eid.slice(prefix.length);
+                    const m = suffix.match(/^(\d+)/);
+                    if (m) {
+                        const val = parseInt(m[1], 10);
+                        if (val > maxSeq) maxSeq = val;
+                    }
+                } else if (eid.includes(`-${nameCode}-`)) {
+                    const parts = eid.split(`-${nameCode}-`);
+                    if (parts.length === 2) {
+                        const m = parts[1].match(/^(\d+)/);
+                        if (m) {
+                            const val = parseInt(m[1], 10);
+                            if (val > maxSeq) maxSeq = val;
+                        }
+                    }
+                }
+            }
+
+            const nextSeq = maxSeq + 1;
+            return `${catCode}-${nameCode}-${String(nextSeq).padStart(5, '0')}`;
+        }
+
+        function autoSuggestMaterialId() {
+            const name = document.getElementById('newConsName').value;
+            const cat = document.getElementById('newConsCat') ? document.getElementById('newConsCat').value : 'Chemicals & Soldering';
+            const idInput = document.getElementById('newConsId');
+            if (!idInput) return;
+            const suggested = getNextMaterialId(name, cat);
+            idInput.placeholder = `${suggested} (Auto if blank)`;
+        }
+
+        function generateMaterialIdNow() {
+            const name = document.getElementById('newConsName').value;
+            const cat = document.getElementById('newConsCat') ? document.getElementById('newConsCat').value : 'Chemicals & Soldering';
+            const idInput = document.getElementById('newConsId');
+            if (!idInput) return;
+            idInput.value = getNextMaterialId(name, cat);
+        }
+
+        function openNewConsumableModal() {
+            const now = new Date();
+            const formatted = now.toISOString().slice(0, 16).replace('T', ' ');
+            const dtInput = document.getElementById('newConsDate');
+            if (dtInput) dtInput.value = formatted;
+            const idInput = document.getElementById('newConsId');
+            if (idInput) idInput.value = '';
+            const nameInput = document.getElementById('newConsName');
+            if (nameInput) nameInput.value = '';
+            autoSuggestMaterialId();
+            document.getElementById('newConsumableModal').classList.add('open');
+        }
+
+        function closeNewConsumableModal() {
+            document.getElementById('newConsumableModal').classList.remove('open');
+        }
+
+        async function handleCreateConsumable(e) {
+            e.preventDefault();
+            const id = (document.getElementById('newConsId').value || '').trim();
+            const name = document.getElementById('newConsName').value.trim();
+            const spec = document.getElementById('newConsSpec').value.trim();
+            const cat = document.getElementById('newConsCat').value;
+            const unit = document.getElementById('newConsUnit').value.trim();
+            const qty = (document.getElementById('newConsQty').value || '0').replace(/,/g, '');
+            const minStock = (document.getElementById('newConsMinStock').value || '0').replace(/,/g, '');
+            const price = (document.getElementById('newConsPrice').value || '0').replace(/,/g, '');
+            const loc = document.getElementById('newConsLoc').value;
+            const proj = (document.getElementById('newConsProject').value || 'Radar EW Facility Project').trim();
+            const dt = (document.getElementById('newConsDate').value || '').trim();
+
+            if (!loc) {
+                alert("Please select a storage location from the dropdown.");
+                return;
+            }
+
+            const fd = new FormData();
+            if (id) fd.append('id', id);
+            fd.append('name', name);
+            fd.append('specification', spec);
+            fd.append('category', cat);
+            fd.append('unit', unit);
+            fd.append('quantity', qty);
+            fd.append('min_stock', minStock);
+            fd.append('unit_price', price);
+            fd.append('location', loc);
+            fd.append('project', proj);
+            if (dt) fd.append('date_time', dt);
+
+            try {
+                const res = await fetch('/api/consumables', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Material registered successfully!");
+                    closeNewConsumableModal();
+                    await loadConsumables();
+                } else {
+                    alert("Error: " + (data.detail || "Failed to register material."));
+                }
+            } catch (err) {
+                alert("Network error: " + err.message);
+            }
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('inventory-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('themeToggleBtn').innerHTML = 'Theme';
+        }
+
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = (cur === 'light') ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('inventory-theme', next);
+            document.getElementById('themeToggleBtn').innerHTML = 'Theme';
+        }
+
+        function updateAuthUI() {
+            const role = localStorage.getItem('auth-role');
+            const userName = localStorage.getItem('auth-user-name');
+            const pill = document.getElementById('authStatusPill');
+            const logoutBtn = document.getElementById('btnLogout');
+            if (!pill) return;
+            if (role === 'superadmin') {
+                pill.innerText = '🛡️ Superadmin';
+                pill.style.borderColor = '#9e6a03';
+                pill.style.color = '#d29922';
+                if (logoutBtn) { logoutBtn.style.display = 'inline-block'; logoutBtn.innerText = 'Logout'; }
+            } else if (role === 'admin') {
+                pill.innerText = '🔑 Admin (Editor)';
+                pill.style.borderColor = '#0969da';
+                pill.style.color = '#0969da';
+                if (logoutBtn) { logoutBtn.style.display = 'inline-block'; logoutBtn.innerText = 'Logout'; }
+            } else if (role === 'user') {
+                pill.innerText = `👤 ${userName || 'Operator'}`;
+                pill.style.borderColor = '#1a7f37';
+                pill.style.color = '#1a7f37';
+                if (logoutBtn) { logoutBtn.style.display = 'inline-block'; logoutBtn.innerText = 'Logout'; }
+            } else {
+                pill.innerText = 'Guest View';
+                pill.style.borderColor = 'var(--border)';
+                pill.style.color = 'var(--text-muted)';
+                if (logoutBtn) { logoutBtn.style.display = 'inline-block'; logoutBtn.innerText = 'Portal'; }
+            }
+        }
+
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('open');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('open');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            if (u === 'superadmin' && p === 'Administrasi##') {
+                localStorage.setItem('auth-role', 'superadmin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                closeLoginModal();
+                updateAuthUI();
+                loadConsumables();
+                if (activeView === 'ledger') loadTransactions();
+                alert("Unlocked: Administrator access granted.");
+            } else if (u === 'admin' && p === 'Administrasi#') {
+                localStorage.setItem('auth-role', 'admin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                closeLoginModal();
+                updateAuthUI();
+                loadConsumables();
+                if (activeView === 'ledger') loadTransactions();
+                alert("Unlocked: Administrator access granted.");
+            } else {
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username_or_email: u, password: p })
+                    });
+                    const d = await res.json();
+                    if (res.ok && d.user) {
+                        localStorage.setItem('auth-role', d.user.role || 'user');
+                        localStorage.setItem('auth-user-name', d.user.name || u);
+                        localStorage.setItem('auth-user-email', d.user.email || '');
+                        localStorage.setItem('auth-user-title', d.user.job_title || 'Operator');
+                        closeLoginModal();
+                        updateAuthUI();
+                        loadConsumables();
+                        if (activeView === 'ledger') loadTransactions();
+                        alert(`Welcome, ${d.user.name}! You are signed in as ${d.user.job_title || 'Operator'}.`);
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Auth login error", err);
+                }
+                alert("Invalid username or password credentials.");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('auth-role');
+            localStorage.removeItem('auth-user-name');
+            localStorage.removeItem('auth-user-email');
+            localStorage.removeItem('auth-user-title');
+            window.location.href = '/';
+        }
+
+        async function loadConsProjects() {
+            try {
+                const res = await fetch('/api/programs');
+                const projs = await res.json();
+
+                // Populate toolbar project filter
+                const filterProj = document.getElementById('filterProject');
+                if (filterProj) {
+                    filterProj.innerHTML = '<option value="">All Projects / Programs</option>';
+                    projs.forEach(p => {
+                        filterProj.innerHTML += `<option value="${p}">${p}</option>`;
+                    });
+                }
+
+                // Populate tx filter project
+                const txFilterProj = document.getElementById('txFilterProject');
+                if (txFilterProj) {
+                    txFilterProj.innerHTML = '<option value="">All Projects / Programs</option>';
+                    projs.forEach(p => {
+                        txFilterProj.innerHTML += `<option value="${p}">${p}</option>`;
+                    });
+                }
+
+                // Populate datalist for inputs
+                const datalist = document.getElementById('allConsProjectsDatalist');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    projs.forEach(p => {
+                        datalist.innerHTML += `<option value="${p}">`;
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load projects for consumables", err);
+            }
+        }
+
+        async function loadConsSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const s = await res.json();
+                if (s.room_title && document.getElementById('consRoomHeading')) {
+                    document.getElementById('consRoomHeading').innerText = s.room_title;
+                }
+                if (s.app_logo_url && document.getElementById('consAppLogoContainer')) {
+                    document.getElementById('consAppLogoContainer').innerHTML = `<img src="${s.app_logo_url}" alt="App Logo" style="height:32px; width:auto; max-width:48px; border-radius:6px; vertical-align:middle; object-fit:contain;">`;
+                }
+            } catch (e) {
+                console.error("Failed to load consumables settings", e);
+            }
+        }
+
+        window.onload = async () => {
+            initTheme();
+            updateAuthUI();
+            await loadConsSettings();
+            await loadConsLocations();
+            await loadConsProjects();
+            await loadConsumables();
+            loadTransactions();
+        };
+    </script>
+</body>
+
+</html>

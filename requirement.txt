@@ -1,0 +1,157 @@
+# ==============================================================================
+# RADAR EW FACILITY WORKSHOP INVENTORY MANAGEMENT SYSTEM
+# SYSTEM REQUIREMENTS & FUNCTIONAL SPECIFICATION (STANDARDIZED & HARMONIZED)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. SYSTEM ARCHITECTURE & ENVIRONMENT
+# ------------------------------------------------------------------------------
+1.1 Platform & Stack:
+    - Backend: Python 3 with FastAPI and Uvicorn server (`start_app.bat` launcher on http://127.0.0.1:8000).
+    - Database: Local SQLite (`inventory.db`) designed for low-maintenance, 5+ years utilization with high capacity (supporting up to 1,000,000 transaction logs).
+    - Frontend: Responsive HTML5/Vanilla CSS/JavaScript (no external node build required).
+    - Typography & Style: Standard Arial font family throughout the entire application.
+    - Theme: Clean white background by default, with an instant Dark Mode toggle switch on the top header.
+    - Asset & Document Storage: Dedicated repository folder structure (`repository/`) organized by equipment and transaction state for persistent historical records.
+
+# ------------------------------------------------------------------------------
+# 2. ACCESS CONTROL & ROLE-BASED PERMISSIONS (RBAC)
+# ------------------------------------------------------------------------------
+2.1 Public Access (Guest / Any User):
+    - No mandatory login page; visitors land directly on the operational dashboard.
+    - Guests can perform comprehensive searches, apply filters, view historical logs, and register new equipment or new transactions.
+    - Guests are strictly prohibited from editing or deleting existing transaction records.
+
+2.2 Discreet Management Portal:
+    - Portal Trigger: A subtle, small, semi-transparent button labeled "Portal" located at the bottom-right corner of every page.
+    - Authenticated Roles:
+        * Admin (Password: `Administrasi#`): Can manage state schedules, edit transaction logs, delete logs, and reassign unmapped locations/programs.
+        * Superadmin (Password: `Administrasi##`): Has full administrative privileges: add/edit/delete logs from any page, configure facility locations and program hierarchies, merge/split equipment records, customize on-screen application text dynamically, manage header logos, and override state sequences.
+        * Admin Can Edit, but Cannot Deletes
+        * Superadmin Can Edit and Delete
+        * How to Edit? user click on the transaction row and open the form and edit.
+        * How to Delete? user click on the delete button in the form and delete.
+        
+
+# ------------------------------------------------------------------------------
+# 3. USER INTERFACE & GENERAL INTERACTION RULES
+# ------------------------------------------------------------------------------
+3.1 Button Label Standardization:
+    - All action buttons must strictly consist of a single word in English (e.g., "Portal", "Transaction", "Export", "Opname", "Reset", "Filter", "Save", "Print", "Delete", "Edit").
+
+3.2 Header & Layout:
+    - Top Left: Organization / Workshop logo.
+    - Top Navigation / Controls: Theme toggle, Location filter dropdown, Room indicator badge, and direct navigation links (Equipment, Consumables).
+    - Quick Action: Primary "Transaction" button positioned at top-left for fast record entry.
+    - Row Indexing: The far-left column of data tables displays a sequential row counter (`#`) reflecting display order.
+    - Reset Control: A universal "Reset" button to immediately clear all active search queries, dropdown filters, location selections, and state criteria.
+
+3.3 Table Interactions & Hover Cards:
+    - Row Click: Clicking any transaction row opens the corresponding input/edit form inside a collapsible left sidebar.
+    - Equipment Name Hover: Hovering over an equipment name displays a top-layer popup card (highest z-index) showing Brand, Model, Type, Serial Number, and Photo Thumbnail preview.
+    - Equipment Detail Navigation: Clicking the Equipment Name (distinct from the serial number) navigates to its full-page Equipment Detail View.
+
+# ------------------------------------------------------------------------------
+# 4. MASTER DATA HIERARCHIES & ENTITY MANAGEMENT
+# ------------------------------------------------------------------------------
+4.1 Location Hierarchy (5-Level):
+    - Kota (City) -> Gedung (Building) -> Lantai (Floor) -> Ruang (Room) -> Tempat (Rack, Cabinet, Bench, Shelf, Desk, etc.).
+    - All facility locations are selectable via dropdowns.
+    - Only Superadmin can create, rename, or delete facility locations.
+    - On the Header, there is a Location Filter dropdown that can be used to filter the data displayed in the table.
+
+4.2 Organizational Hierarchies:
+    - Program Hierarchy: Nama Program -> Sub Program (Dropdown on the left side of the Location Filter dropdown).
+    - System Hierarchy: Nama Sistem -> Sub Sistem (Dropdown on the left side of the Program Filter dropdown).
+    - Product Hierarchy: Nama Produk -> Sub Produk (Dropdown on the left side of the System Filter dropdown).
+    - Equipment and Consumables can be reassigned between Programs and Locations.
+
+4.3 Orphan & Safety Fallbacks:
+    - If a Location or Program is deleted, affected equipment and materials automatically reassign to "Unknown Location" and "Unknown Program".
+    - Admin and Superadmin have privileges to reassign items from Unknown Location/Program to valid hierarchies.
+
+4.4 Record Deduplication & Consolidation (Superadmin):
+    - Merge: Superadmin can merge duplicate items sharing identical Brand, Model, and Serial Number directly from table/console.
+    - Rename: Superadmin can rename Equipment Names with automatic batch consolidation.
+    - Split: Superadmin can unmerge/split previously combined item records.
+    - App Customizer: Superadmin can modify UI labels and contextual text directly across the application.
+    - Logo Manager: Superadmin can upload, replace, or reset the header logo with a default fallback.
+
+# ------------------------------------------------------------------------------
+# 5. EQUIPMENT & TOOLS INVENTORY LIFECYCLE
+# ------------------------------------------------------------------------------
+5.1 Individual Item Tracking:
+    - Every equipment record represents a unique, serialized item (not pooled quantities).
+    - Tools ID are generating by system during first register, superadmin can change Tools ID manually.
+    
+
+5.2 Lifecycle States:
+    - Standard Progression: New Purchase -> Active -> Maintenance -> Repair -> Transfer -> Disposal.
+    - Permitted States: New Purchase, Transfer, Active, Borrow, Maintenance, Repair, Dispose, Sell, Lost, Damage, Broken, Junk, Donated, Scrapped, Retired.
+    - Terminal Rule: Terminal states (Dispose, Sell, Lost, Broken, Junk, Donated, Scrapped, Retired) lock the item from further regular operational transactions.
+    - Visual State Styling:
+        * Past historical states are styled in grey italic font.
+        * Current / latest state is styled in bold green font.
+        * State indicators use typography only (no colored background badges/boxes).
+        * The literal label "current state" must not be printed; green bold styling alone designates current status.
+
+5.3 Conditions:
+    - Dropdown selection covering standard workshop conditions (e.g., Brand New / Sealed, Good / Operational, Calibrated & Certified, Fair / Minor Wear, Needs Cleaning, Needs Calibration, Under Repair, Damaged, Broken, Missing, Decommissioned).
+
+5.4 Transaction Log Attributes:
+    - Required Fields: Date, PIC, Purpose, Equipment / Tool Selection, Current Condition, and State.
+    - Auto-complete: Equipment Name dropdown suggests existing historical names; manual text entry automatically converts to Title Case on submission.
+    - State Transitions: Capability to move location, reassign PIC, record expenses, or record terminal status.
+    - Currency & Expenses: Transaction expenses recorded in Indonesian Rupiah (IDR), displayed as right-aligned formatted numbers without currency prefix symbols. The top summary displays cumulative total expenditure from inception to date.
+    - Sorting:
+        * Default log table sorting is Descending by Date (latest transactions first).
+        * Equipment detail history provides chronological tracking from procurement to present.
+        * Sorting toggle action is placed directly on the Date table header (no separate dropdown selector).
+
+5.5 Document & Photo Storage Repository:
+    - Dedicated subdirectories created per equipment under `repository/<Equipment_ID>/`.
+    - Photo Column: Displays thumbnail; clicking opens full image.
+    - Document Column: Displays an icon (`📄`); clicking directly opens/downloads the file in a new tab.
+    - Filename Sanitization: Normalizes filenames and strips invalid Windows filesystem characters to ensure reliable uploads.
+
+# ------------------------------------------------------------------------------
+# 6. CONSUMABLES INVENTORY MANAGEMENT
+# ------------------------------------------------------------------------------
+6.1 Dedicated Consumables Module:
+    - Standalone table and transaction entry for workshop consumable materials.
+
+6.2 Financial Ledger (Debit / Credit Stock Accounting):
+    - Stock tracking operates like an expense ledger: Stock In, Stock Out, and Balance.
+    - Stock Reduction Rule: Stock Out must strictly subtract from the balance (Balance = Previous Balance + Stock In - Stock Out).
+    - Table includes Datetime column, sorted descending by date by default.
+    - Filter Bar: Granular filtering by Name, Item Code, Category, and Storage Location.
+
+# ------------------------------------------------------------------------------
+# 7. STOCK OPNAME & AUDITING
+# ------------------------------------------------------------------------------
+7.1 Physical Inventory Opname:
+    - Audit View: Displays only the Current State of items (historical audit noise hidden).
+    - Bottom Action Controls:
+        * "Download": Export current inventory state checklist sheet.
+        * "Opname": Upload completed audit checklist document and save verified physical inventory state.
+
+# ------------------------------------------------------------------------------
+# 8. REPORTING, EXPORTING & PRINTING
+# ------------------------------------------------------------------------------
+8.1 Periodic Transaction Dashboard Export:
+    - Triggered by "Export" button on the bottom left.
+    - Form Filters: Start Date, Finish Date, Location, PIC, Condition, and Status.
+    - Format: Standard A4 PDF / print document featuring Workshop Logo, Header, Formatted Data Table, and Footer with PIC signature blocks.
+
+8.2 Equipment Detail Full-Screen Print:
+    - Full-screen table view on Equipment Detail page.
+    - Dedicated "Print" button generating an A4 printable report with Header Logo, full equipment specifications, complete chronological history, and PIC sign-off block.
+
+# ------------------------------------------------------------------------------
+# 9. SEED DATA & BENCHMARK DEMONSTRATION REQUIREMENTS
+# ------------------------------------------------------------------------------
+9.1 Benchmark Records:
+    - At least 12 distinct equipment varieties tailored to Radar & Electronic Warfare (EW) workshops (e.g., Spectrum Analyzer, Signal Generator, Vector Network Analyzer, Oscilloscope, Power Meter, Horn Antenna, Anechoic Chamber Positioner, RF Amplifier, Waveguide Cal Kit, Noise Figure Analyzer, Frequency Counter, Thermal Imaging Camera).
+    - At least 12 sequential historical transaction records for benchmark items (e.g., Workshop Printer) tracing from initial procurement to present state.
+    - 1 to 20 chronological lifecycle transactions per equipment item.
+    - 3 to 10 distinct condition levels represented across records.

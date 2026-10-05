@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar EW Facility Workshop</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        :root[data-theme="light"] {
+            --bg-page: #f5f5f7;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-input: #ffffff;
+            --border-subtle: rgba(0, 0, 0, 0.12);
+            --border-focus: #0071e3;
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --btn-text: #ffffff;
+            --shadow-card: 0 20px 48px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --aura-1: rgba(0, 113, 227, 0.08);
+            --aura-2: rgba(52, 199, 89, 0.06);
+            --error-bg: #fff2f2;
+            --error-text: #d70015;
+            --success-bg: #f0fdf4;
+            --success-text: #248a3d;
+            --guest-hover: #e8e8ed;
+        }
+
+        :root[data-theme="dark"] {
+            --bg-page: #000000;
+            --bg-card: rgba(26, 26, 28, 0.82);
+            --bg-input: #1c1c1e;
+            --border-subtle: rgba(255, 255, 255, 0.14);
+            --border-focus: #2997ff;
+            --text-primary: #f5f5f7;
+            --text-secondary: #86868b;
+            --accent: #2997ff;
+            --accent-hover: #0077ed;
+            --btn-text: #ffffff;
+            --shadow-card: 0 24px 60px rgba(0, 0, 0, 0.65), 0 2px 10px rgba(0, 0, 0, 0.4);
+            --aura-1: rgba(41, 151, 255, 0.12);
+            --aura-2: rgba(48, 209, 88, 0.08);
+            --error-bg: #2c1214;
+            --error-text: #ff453a;
+            --success-bg: #12281a;
+            --success-text: #30d158;
+            --guest-hover: #2c2c2e;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 32px 20px;
+            transition: background-color 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Apple-style Ethereal Ambient Backdrop */
+        .ambient-aura {
+            position: fixed;
+            top: -20vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            max-width: 140vw;
+            height: 700px;
+            background: radial-gradient(ellipse at 50% 40%, var(--aura-1) 0%, var(--aura-2) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(50px);
+        }
+
+        /* Minimal Top Bar */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            padding: 0 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .nav-brand {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #34c759;
+            box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 980px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            color: var(--text-primary);
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        /* Central Container - iCloud Hero Card */
+        .portal-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 410px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: auto;
+        }
+
+        /* Iconic Hero Crest */
+        .hero-crest {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0071e3 0%, #34c759 100%);
+            box-shadow: 0 12px 28px rgba(0, 113, 227, 0.28);
+            margin-bottom: 22px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .hero-crest:hover {
+            transform: scale(1.05);
+        }
+
+        .hero-crest svg {
+            width: 36px;
+            height: 36px;
+            stroke: #ffffff;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Hero Headings */
+        .hero-title {
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 26px;
+            line-height: 1.4;
+        }
+
+        /* Main Glass Card */
+        .glass-card {
+            width: 100%;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            box-shadow: var(--shadow-card);
+            padding: 28px 24px;
+            transition: all 0.3s ease;
+        }
+
+        /* Active Session Pill */
+        .active-session-pill {
+            display: none;
+            width: 100%;
+            background: rgba(0, 113, 227, 0.08);
+            border: 1px solid rgba(0, 113, 227, 0.2);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: var(--text-primary);
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .active-session-pill a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn-text-logout {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .btn-text-logout:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+
+        /* Alert Pill */
+        .portal-alert {
+            display: none;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 18px;
+            line-height: 1.35;
+        }
+
+        .portal-alert.alert-error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid currentColor;
+        }
+
+        .portal-alert.alert-success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid currentColor;
+        }
+
+        /* Form Controls */
+        .input-group {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .input-field {
+            width: 100%;
+            height: 48px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Primary Action Button (iCloud pill style) */
+        .btn-primary {
+            width: 100%;
+            height: 46px;
+            background-color: var(--accent);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+            transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Guest Access Pill */
+        .btn-guest {
+            width: 100%;
+            height: 44px;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-guest:hover {
+            background: var(--guest-hover);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Divider */
+        .card-divider {
+            display: flex;
+            align-items: center;
+            margin: 18px 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .card-divider::before,
+        .card-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .card-divider span {
+            padding: 0 10px;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Subtle Toggle Link */
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .auth-switch-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+
+        .auth-switch-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Minimal Footer */
+        .minimal-footer {
+            margin-top: 36px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            letter-spacing: -0.01em;
+            z-index: 10;
+        }
+
+        /* Mode Panels */
+        .mode-panel {
+            display: none;
+        }
+
+        .mode-panel.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+
+            .glass-card {
+                padding: 24px 18px;
+                border-radius: 18px;
+            }
+
+            .hero-title {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Aura -->
+    <div class="ambient-aura"></div>
+
+    <!-- Minimal Top Bar -->
+    <header class="top-nav">
+        <div class="nav-brand">
+            <span class="nav-brand-dot"></span>
+            <span>Radar EW Facility</span>
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle" onclick="toggleTheme()" title="Switch Theme">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Dark</span>
+        </button>
+    </header>
+
+    <!-- Central iCloud-style Portal -->
+    <main class="portal-wrapper">
+
+        <!-- Glowing Minimal Crest -->
+        <div class="hero-crest">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <circle cx="12" cy="11" r="3" />
+                <path d="M12 8v-1M12 15v-1M8.5 11h-1M16.5 11h-1" />
+            </svg>
+        </div>
+
+        <h1 class="hero-title" id="portalHeaderTitle">Sign In</h1>
+        <p class="hero-subtitle" id="portalHeaderSub">Workshop Inventory &amp; Facility Records</p>
+
+        <!-- Active Session Pill -->
+        <div id="activeSessionBanner" class="active-session-pill">
+            <span>Signed in as <strong id="activeSessionInfo">Administrator</strong></span>
+            <div>
+                <a href="/dashboard">Dashboard →</a>
+                <button type="button" class="btn-text-logout" onclick="clearSession()">Log Out</button>
+            </div>
+        </div>
+
+        <!-- Alert Notification Box -->
+        <div id="portalAlert" class="portal-alert"></div>
+
+        <!-- Glass Card Form Container -->
+        <div class="glass-card">
+
+            <!-- PANE 1: SIGN IN (Default) -->
+            <section id="paneSignIn" class="mode-panel active">
+                <form id="formSignIn" onsubmit="handleSignInSubmit(event)">
+                    <div class="input-group">
+                        <input type="text" id="signinEmail" class="input-field" placeholder="Email or Username" required autofocus autocomplete="username">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="signinPassword" class="input-field" placeholder="Password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signinPassword', this)" title="Show/Hide">👁️</button>
+                    </div>
+
+                    <button type="submit" id="btnSignInSubmit" class="btn-primary">
+                        <span>Sign In</span>
+                        <span>→</span>
+                    </button>
+                </form>
+
+                <div class="card-divider">
+                    <span>or</span>
+                </div>
+
+                <button type="button" class="btn-guest" onclick="continueAsGuest()">
+                    <span>Continue as Guest</span>
+                    <span style="opacity:0.6;">→</span>
+                </button>
+
+                <div class="auth-switch">
+                    <span>Don't have an account?</span>
+                    <a class="auth-switch-link" onclick="switchMode('signup')">Create Account</a>
+                </div>
+            </section>
+
+            <!-- PANE 2: SIGN UP (Registration) -->
+            <section id="paneSignUp" class="mode-panel">
+                <form id="formSignUp" onsubmit="handleSignUpSubmit(event)">
+                    <div class="input-group">
+                        <input type="text" id="signupName" class="input-field" placeholder="Full Name" required autocomplete="name">
+                    </div>
+
+                    <div class="input-group">
+                        <input type="email" id="signupEmail" class="input-field" placeholder="Email Address" required autocomplete="email">
+                    </div>
+
+                    <div class="input-group">
+                        <select id="signupJobTitle" class="input-field" style="appearance:none; -webkit-appearance:none;">
+                            <option value="Radar Technician">Radar Technician</option>
+                            <option value="Avionics & EW Engineer">Avionics &amp; EW Engineer</option>
+                            <option value="Workshop Operator">Workshop Operator</option>
+                            <option value="Inventory Controller / PIC">Inventory Controller / PIC</option>
+                            <option value="Quality Assurance Inspector">QA Inspector</option>
+                            <option value="Maintenance Specialist">Maintenance Specialist</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="signupPassword" class="input-field" placeholder="Create Password (min. 6 characters)" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signupPassword', this)" title="Show/Hide">👁️</button>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="password" id="signupRepeatPassword" class="input-field" placeholder="Repeat Password" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('signupRepeatPassword', this)" title="Show/Hide">👁️</button>
+                    </div>
+
+                    <button type="submit" id="btnSignUpSubmit" class="btn-primary">
+                        <span>Create &amp; Sign In</span>
+                        <span>→</span>
+                    </button>
+                </form>
+
+                <div class="auth-switch">
+                    <span>Already have an account?</span>
+                    <a class="auth-switch-link" onclick="switchMode('signin')">Sign In</a>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- Minimal Apple-Style Footer -->
+    <footer class="minimal-footer">
+        Radar EW Facility Workshop &copy; 2026
+    </footer>
+
+    <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeBtnUI(savedTheme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = (current === 'light') ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeBtnUI(next);
+        }
+
+        function updateThemeBtnUI(theme) {
+            const icon = document.getElementById('themeIcon');
+            const label = document.getElementById('themeLabel');
+            if (icon && label) {
+                if (theme === 'dark') {
+                    icon.innerText = '☀️';
+                    label.innerText = 'Light';
+                } else {
+                    icon.innerText = '🌙';
+                    label.innerText = 'Dark';
+                }
+            }
+        }
+
+        // Active Session Checker
+        function checkActiveSession() {
+            const role = localStorage.getItem('auth-role');
+            const name = localStorage.getItem('auth-user-name') || 'Administrator';
+            const banner = document.getElementById('activeSessionBanner');
+            const info = document.getElementById('activeSessionInfo');
+
+            if (role && role !== 'guest') {
+                banner.style.display = 'flex';
+                info.innerText = `${name}`;
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function clearSession() {
+            localStorage.removeItem('auth-role');
+            localStorage.removeItem('auth-user-name');
+            localStorage.removeItem('auth-user-email');
+            localStorage.removeItem('auth-user-title');
+            showAlert("Session cleared.", "info");
+            checkActiveSession();
+        }
+
+        // Mode Switching
+        function switchMode(mode) {
+            const paneIn = document.getElementById('paneSignIn');
+            const paneUp = document.getElementById('paneSignUp');
+            const title = document.getElementById('portalHeaderTitle');
+            const sub = document.getElementById('portalHeaderSub');
+            hideAlert();
+
+            if (mode === 'signup') {
+                paneIn.classList.remove('active');
+                paneUp.classList.add('active');
+                title.innerText = "Create Account";
+                sub.innerText = "Register for workshop credentials";
+                document.getElementById('signupName').focus();
+            } else {
+                paneUp.classList.remove('active');
+                paneIn.classList.add('active');
+                title.innerText = "Sign In";
+                sub.innerText = "Workshop Inventory & Facility Records";
+                document.getElementById('signinEmail').focus();
+            }
+        }
+
+        // Password Visibility Toggle
+        function togglePasswordVisibility(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            if (field.type === 'password') {
+                field.type = 'text';
+                btn.innerText = '🙈';
+            } else {
+                field.type = 'password';
+                btn.innerText = '👁️';
+            }
+        }
+
+        // Alerts Display
+        function showAlert(msg, type = 'error') {
+            const alertBox = document.getElementById('portalAlert');
+            alertBox.innerText = msg;
+            alertBox.className = `portal-alert alert-${type}`;
+            alertBox.style.display = 'block';
+        }
+
+        function hideAlert() {
+            const alertBox = document.getElementById('portalAlert');
+            alertBox.style.display = 'none';
+        }
+
+        // Guest Entry
+        function continueAsGuest() {
+            localStorage.setItem('auth-role', 'guest');
+            localStorage.setItem('auth-user-name', 'Guest User');
+            localStorage.setItem('auth-user-title', 'Visitor');
+            window.location.href = '/dashboard';
+        }
+
+        // Sign In Handler
+        async function handleSignInSubmit(e) {
+            e.preventDefault();
+            hideAlert();
+
+            const usernameOrEmail = document.getElementById('signinEmail').value.trim();
+            const password = document.getElementById('signinPassword').value.trim();
+            const submitBtn = document.getElementById('btnSignInSubmit');
+
+            if (!usernameOrEmail || !password) {
+                showAlert("Please enter your username and password.");
+                return;
+            }
+
+            // Quick client-side check for administrative credentials
+            if (usernameOrEmail === 'superadmin' && password === 'Administrasi##') {
+                localStorage.setItem('auth-role', 'superadmin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                localStorage.setItem('auth-user-email', 'admin@radarew.local');
+                localStorage.setItem('auth-user-title', 'Facility Lead');
+                showAlert("Signing in...", "success");
+                setTimeout(() => { window.location.href = '/dashboard'; }, 350);
+                return;
+            } else if (usernameOrEmail === 'admin' && password === 'Administrasi#') {
+                localStorage.setItem('auth-role', 'admin');
+                localStorage.setItem('auth-user-name', 'Administrator');
+                localStorage.setItem('auth-user-email', 'admin@radarew.local');
+                localStorage.setItem('auth-user-title', 'Inventory Controller');
+                showAlert("Signing in...", "success");
+                setTimeout(() => { window.location.href = '/dashboard'; }, 350);
+                return;
+            }
+
+            // Remote API Authentication
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Signing In...";
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username_or_email: usernameOrEmail,
+                        password: password
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || data.message || "Invalid credentials.");
+                }
+
+                localStorage.setItem('auth-role', data.user.role || 'user');
+                localStorage.setItem('auth-user-name', data.user.name || usernameOrEmail);
+                localStorage.setItem('auth-user-email', data.user.email || '');
+                localStorage.setItem('auth-user-title', data.user.job_title || 'Operator');
+
+                showAlert("Sign in successful. Redirecting...", "success");
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 400);
+            } catch (err) {
+                showAlert(err.message, "error");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Sign In</span><span>→</span>`;
+            }
+        }
+
+        // Sign Up Handler
+        async function handleSignUpSubmit(e) {
+            e.preventDefault();
+            hideAlert();
+
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+            const jobTitle = document.getElementById('signupJobTitle').value;
+            const password = document.getElementById('signupPassword').value;
+            const repeatPassword = document.getElementById('signupRepeatPassword').value;
+            const submitBtn = document.getElementById('btnSignUpSubmit');
+
+            if (!name || !email || !password || !repeatPassword) {
+                showAlert("All fields are required.");
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert("Password must be at least 6 characters.");
+                return;
+            }
+
+            if (password !== repeatPassword) {
+                showAlert("Passwords do not match.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Creating Account...";
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        job_title: jobTitle,
+                        password: password,
+                        repeat_password: repeatPassword
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || data.message || "Failed to create account.");
+                }
+
+                localStorage.setItem('auth-role', data.user.role || 'user');
+                localStorage.setItem('auth-user-name', data.user.name || name);
+                localStorage.setItem('auth-user-email', data.user.email || email);
+                localStorage.setItem('auth-user-title', data.user.job_title || jobTitle);
+
+                showAlert("Account created. Redirecting...", "success");
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 450);
+            } catch (err) {
+                showAlert(err.message, "error");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Create &amp; Sign In</span><span>→</span>`;
+            }
+        }
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            checkActiveSession();
+        });
+    </script>
+</body>
+
+</html>
