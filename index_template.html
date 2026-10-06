@@ -302,6 +302,27 @@
             border-color: #cf222e;
         }
 
+        .toolbar-search-row {
+            display: contents;
+        }
+
+        .btn-toggle-filters {
+            display: none;
+        }
+
+        .filter-dropdowns-group {
+            display: contents;
+        }
+
+        .filter-count-badge {
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
         /* Main Workspace & Table */
         main {
             flex: 1;
@@ -857,32 +878,93 @@
             .toolbar {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 8px;
-                padding: 10px 14px;
+                gap: 6px;
+                padding: 8px 12px;
+                flex-shrink: 0;
+            }
+
+            .toolbar-search-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                width: 100%;
             }
 
             .search-box {
-                width: 100%;
+                width: auto;
+                flex: 1 1 0;
                 min-width: 0;
-                flex: none;
             }
 
             .search-box input {
-                min-height: 42px;
+                min-height: 38px;
                 font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
             }
 
+            .btn-toggle-filters {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 10px;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text-main);
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                white-space: nowrap;
+                min-height: 38px;
+            }
+
+            .btn-toggle-filters.active {
+                background: rgba(31, 111, 235, 0.12);
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            .filter-dropdowns-group {
+                display: none;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                width: 100%;
+                padding-top: 2px;
+            }
+
+            .filter-dropdowns-group.open {
+                display: grid;
+            }
+
             .filter-select, .btn-reset, .date-filter-box, .btn-header {
-                min-height: 40px;
+                min-height: 36px;
                 font-size: 14px;
             }
 
             .filter-select {
                 font-size: 16px !important; /* Critical: avoids iOS Safari zoom */
+                width: 100%;
             }
 
             .form-control, input, select, textarea {
                 font-size: 16px !important; /* Avoids iOS Safari auto-zoom on form focus */
+            }
+
+            main {
+                flex: 1 1 0;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .table-container {
+                flex: 1 1 0;
+                min-height: 0;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+                position: relative;
+                padding-bottom: calc(var(--sab) + 60px);
             }
 
             /* Fullscreen slide-in sidebar on mobile */
@@ -1014,40 +1096,47 @@
 
     <!-- Filter & Full Database Search Toolbar -->
     <div class="toolbar">
-        <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput"
-                placeholder="Search database: name, brand, model, serial, PIC, purpose, date..."
-                oninput="debounceSearch()">
+        <div class="toolbar-search-row">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput"
+                    placeholder="Search database: name, brand, model, serial, PIC, purpose, date..."
+                    oninput="debounceSearch()">
+            </div>
+            <button type="button" class="btn-toggle-filters" id="btnToggleFilters" onclick="toggleMobileFilters()" title="Toggle advanced filters">
+                <span>⚡ Filters</span>
+                <span id="activeFilterBadge" class="filter-count-badge" style="display:none;">0</span>
+            </button>
+            <!-- Requirement 57: Reset button to clear search and all filters -->
+            <button class="btn-reset" onclick="resetAllFilters()" title="Reset Filters">Reset</button>
         </div>
 
-        <!-- Requirement 50: Drop down selector by Locations, Project/Program, Equipment Name, PIC, Condition, and State -->
-        <select id="locationFilterSelect" class="filter-select" onchange="syncToolbarLocationToHeader()">
-            <option value="">All Locations</option>
-        </select>
+        <div class="filter-dropdowns-group" id="filterDropdownsGroup">
+            <!-- Requirement 50: Drop down selector by Locations, Project/Program, Equipment Name, PIC, Condition, and State -->
+            <select id="locationFilterSelect" class="filter-select" onchange="syncToolbarLocationToHeader()">
+                <option value="">All Locations</option>
+            </select>
 
-        <select id="projectFilterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="">All Projects / Programs</option>
-        </select>
+            <select id="projectFilterSelect" class="filter-select" onchange="applyFilters()">
+                <option value="">All Projects / Programs</option>
+            </select>
 
-        <select id="equipmentFilterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="">All Equipment</option>
-        </select>
+            <select id="equipmentFilterSelect" class="filter-select" onchange="applyFilters()">
+                <option value="">All Equipment</option>
+            </select>
 
-        <select id="picFilterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="">All PIC</option>
-        </select>
+            <select id="picFilterSelect" class="filter-select" onchange="applyFilters()">
+                <option value="">All PIC</option>
+            </select>
 
-        <select id="conditionFilterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="">All Conditions</option>
-        </select>
+            <select id="conditionFilterSelect" class="filter-select" onchange="applyFilters()">
+                <option value="">All Conditions</option>
+            </select>
 
-        <select id="stateFilterSelect" class="filter-select" onchange="applyFilters()">
-            <option value="">All States</option>
-        </select>
-
-        <!-- Requirement 57: Reset button to clear search and all filters -->
-        <button class="btn-reset" onclick="resetAllFilters()" title="Reset Filters">Reset</button>
+            <select id="stateFilterSelect" class="filter-select" onchange="applyFilters()">
+                <option value="">All States</option>
+            </select>
+        </div>
     </div>
 
     <!-- Main Table View -->
@@ -2571,6 +2660,34 @@
             }
         }
 
+        function toggleMobileFilters() {
+            const group = document.getElementById('filterDropdownsGroup');
+            if (group) {
+                group.classList.toggle('open');
+            }
+        }
+
+        function updateActiveFilterBadge() {
+            let count = 0;
+            const filterIds = ['locationFilterSelect', 'projectFilterSelect', 'equipmentFilterSelect', 'picFilterSelect', 'conditionFilterSelect', 'stateFilterSelect'];
+            filterIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value) count++;
+            });
+            const badge = document.getElementById('activeFilterBadge');
+            const btn = document.getElementById('btnToggleFilters');
+            if (badge) {
+                if (count > 0) {
+                    badge.innerText = count;
+                    badge.style.display = 'inline-block';
+                    if (btn) btn.classList.add('active');
+                } else {
+                    badge.style.display = 'none';
+                    if (btn) btn.classList.remove('active');
+                }
+            }
+        }
+
         function resetAllFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('locationFilterSelect').value = '';
@@ -2581,6 +2698,7 @@
             document.getElementById('stateFilterSelect').value = '';
             currentSortOrder = 'desc';
             document.getElementById('sortIndicator').innerText = '▼';
+            updateActiveFilterBadge();
             loadTransactions(true);
         }
 
@@ -2749,15 +2867,17 @@
         }
 
         function applyFilters() {
+            updateActiveFilterBadge();
             loadTransactions(true);
         }
 
         function handleScroll() {
             const container = document.getElementById('tableContainer');
-            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 60) {
-                if (hasMore && !isLoading) {
-                    loadTransactions(false);
-                }
+            if (!container) return;
+            const isNearBottom = (container.scrollTop + container.clientHeight >= container.scrollHeight - 80) ||
+                                 (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120);
+            if (isNearBottom && hasMore && !isLoading) {
+                loadTransactions(false);
             }
         }
 

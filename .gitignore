@@ -27,3 +27,8 @@ Thumbs.db
 
 # Temporary scratch scripts
 scratch/
+
+# Database backups
+*.bak
+*.backup*
+inventory.db.*

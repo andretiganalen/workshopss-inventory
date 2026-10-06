@@ -266,6 +266,27 @@
             color: var(--accent);
         }
 
+        .toolbar-search-row {
+            display: contents;
+        }
+
+        .btn-toggle-filters {
+            display: none;
+        }
+
+        .filter-dropdowns-group {
+            display: contents;
+        }
+
+        .filter-count-badge {
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
         main {
             flex: 1;
             display: flex;
@@ -659,26 +680,63 @@
                 padding: 6px 8px;
             }
 
-            .filter-bar {
+            .toolbar {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 8px;
-                padding: 10px 14px;
+                gap: 6px;
+                padding: 8px 12px;
+                flex-shrink: 0;
             }
 
-            .filter-group {
+            .toolbar-search-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
                 width: 100%;
-                flex-wrap: wrap;
             }
 
             .filter-input {
-                min-height: 42px;
+                min-height: 38px;
                 width: 100%;
                 font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
             }
 
+            .btn-toggle-filters {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 10px;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text-main);
+                font-size: 0.8rem;
+                font-weight: 600;
+                cursor: pointer;
+                white-space: nowrap;
+                min-height: 38px;
+            }
+
+            .btn-toggle-filters.active {
+                background: rgba(31, 111, 235, 0.12);
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            .filter-dropdowns-group {
+                display: none;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                width: 100%;
+                padding-top: 2px;
+            }
+
+            .filter-dropdowns-group.open {
+                display: grid;
+            }
+
             .filter-select {
-                min-height: 42px;
+                min-height: 36px;
                 width: 100%;
                 max-width: 100%;
                 font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
@@ -686,6 +744,24 @@
 
             .form-control, input, select, textarea {
                 font-size: 16px !important; /* Avoids iOS Safari auto-zoom on form focus */
+            }
+
+            main {
+                flex: 1 1 0;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .table-container {
+                flex: 1 1 0;
+                min-height: 0;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+                position: relative;
+                padding-bottom: calc(var(--sab) + 60px);
             }
 
             /* Responsive touch modals */
@@ -796,31 +872,39 @@
 
     <!-- Toolbar Filters: Filter by Name, Materials ID, Project/Program, Category, Storage Location (Requirement 86) -->
     <div class="toolbar">
-        <input type="text" id="filterName" class="filter-input" placeholder="Search Name, Brand, Merk, Type, Spec..." style="width:230px;"
-            oninput="applyFilters()">
-        <input type="text" id="filterCode" class="filter-input" placeholder="Materials ID..." style="width:130px;"
-            oninput="applyFilters()">
+        <div class="toolbar-search-row">
+            <input type="text" id="filterName" class="filter-input" placeholder="Search Name, Brand, Merk, Type, Spec..."
+                oninput="applyFilters()">
+            <button type="button" class="btn-toggle-filters" id="btnToggleConsFilters" onclick="toggleMobileConsFilters()" title="Toggle filters">
+                <span>⚡ Filters</span>
+                <span id="activeConsFilterBadge" class="filter-count-badge" style="display:none;">0</span>
+            </button>
+            <button class="btn-action-small" onclick="resetFilters()">Reset</button>
+        </div>
 
-        <select id="filterProject" class="filter-select" onchange="applyFilters()">
-            <option value="">All Projects / Programs</option>
-        </select>
+        <div class="filter-dropdowns-group" id="consFilterDropdownsGroup">
+            <input type="text" id="filterCode" class="filter-input" placeholder="Materials ID..." style="max-width:200px;"
+                oninput="applyFilters()">
 
-        <select id="filterCategory" class="filter-select" onchange="applyFilters()">
-            <option value="">All Categories</option>
-        </select>
+            <select id="filterProject" class="filter-select" onchange="applyFilters()">
+                <option value="">All Projects / Programs</option>
+            </select>
 
-        <select id="filterLocation" class="filter-select" onchange="applyFilters()">
-            <option value="">All Storage Locations</option>
-        </select>
+            <select id="filterCategory" class="filter-select" onchange="applyFilters()">
+                <option value="">All Categories</option>
+            </select>
 
-        <select id="filterStatus" class="filter-select" style="max-width:140px;" onchange="applyFilters()">
-            <option value="">All Status</option>
-            <option value="good">In Stock</option>
-            <option value="low">Low Stock</option>
-            <option value="depleted">Depleted</option>
-        </select>
+            <select id="filterLocation" class="filter-select" onchange="applyFilters()">
+                <option value="">All Storage Locations</option>
+            </select>
 
-        <button class="btn-action-small" onclick="resetFilters()">Reset</button>
+            <select id="filterStatus" class="filter-select" onchange="applyFilters()">
+                <option value="">All Status</option>
+                <option value="good">In Stock</option>
+                <option value="low">Low Stock</option>
+                <option value="depleted">Depleted</option>
+            </select>
+        </div>
     </div>
 
     <main>
@@ -1775,8 +1859,35 @@
             }
         }
 
+        function toggleMobileConsFilters() {
+            const group = document.getElementById('consFilterDropdownsGroup');
+            if (group) group.classList.toggle('open');
+        }
+
+        function updateActiveConsFilterBadge() {
+            let count = 0;
+            const fields = ['filterCode', 'filterProject', 'filterCategory', 'filterLocation', 'filterStatus'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.value) count++;
+            });
+            const badge = document.getElementById('activeConsFilterBadge');
+            const btn = document.getElementById('btnToggleConsFilters');
+            if (badge) {
+                if (count > 0) {
+                    badge.innerText = count;
+                    badge.style.display = 'inline-block';
+                    if (btn) btn.classList.add('active');
+                } else {
+                    badge.style.display = 'none';
+                    if (btn) btn.classList.remove('active');
+                }
+            }
+        }
+
         // Filters by Name, Code, Project/Program, Category, Storage Location (Requirement 86)
         function applyFilters() {
+            updateActiveConsFilterBadge();
             const nameQ = document.getElementById('filterName').value.toLowerCase().trim();
             const codeQ = document.getElementById('filterCode').value.toLowerCase().trim();
             const projQ = (document.getElementById('filterProject') ? document.getElementById('filterProject').value : '').toLowerCase().trim();
