@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: radar-ew-inventory
+    name: workshopss-inventory
     runtime: python
     region: singapore
     plan: free

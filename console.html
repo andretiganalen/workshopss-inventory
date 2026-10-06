@@ -348,9 +348,10 @@
             <span class="role-badge">Superadmin Active</span>
         </div>
         <div class="nav-links">
-            <a href="/" class="nav-btn">🏠 Portal Landing</a>
-            <a href="/dashboard" class="nav-btn primary">📊 Dashboard</a>
+            <a href="/dashboard" class="nav-btn" onclick="handleConsoleBack(event)" title="Return to Equipment Inventory">← Back</a>
+            <a href="/dashboard" class="nav-btn primary">📊 Equipment</a>
             <a href="/consumables" class="nav-btn">📦 Consumables</a>
+            <a href="/" class="nav-btn" style="opacity:0.7;" title="Facility Portal">🏠 Portal</a>
         </div>
     </header>
 
@@ -761,6 +762,15 @@
 
     <!-- Scripts -->
     <script>
+        function handleConsoleBack(event) {
+            if (event) event.preventDefault();
+            if (window.history.length > 1 && document.referrer && !document.referrer.endsWith('/') && !document.referrer.endsWith('/landing')) {
+                window.history.back();
+            } else {
+                window.location.href = '/dashboard';
+            }
+        }
+
         let cachedLocations = [];
         let cachedConditions = [];
 
@@ -897,7 +907,7 @@
                         <td style="text-align:center;"><span class="badge-count">${loc.consumables_count || 0}</span></td>
                         <td style="text-align:center;">
                             <button type="button" class="btn-small" onclick="openEditRoomModal('${encodeURIComponent(JSON.stringify(loc))}')">✏️ Edit</button>
-                            ${loc.name !== 'Unknown Location' ? `<button type="button" class="btn-small danger" onclick="handleDeleteRoom('${loc.name}')">🗑️ Delete</button>` : ''}
+                            ${loc.name !== 'Unknown Location' ? `<button type="button" class="btn-small danger" onclick="handleDeleteRoom('${encodeURIComponent(loc.name)}')">🗑️ Delete</button>` : ''}
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -981,7 +991,8 @@
             }
         }
 
-        async function handleDeleteRoom(name) {
+        async function handleDeleteRoom(rawName) {
+            const name = decodeURIComponent(rawName);
             if (!confirm(`Delete location '${name}'? Any assigned equipment and consumables will be safely moved to 'Unknown Location'.`)) return;
             try {
                 const res = await fetch(`/api/locations/${encodeURIComponent(name)}?role=admin`, { method: 'DELETE' });

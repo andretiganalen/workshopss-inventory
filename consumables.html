@@ -499,10 +499,91 @@
             color: var(--accent);
             opacity: 1;
         }
+
+        /* Superadmin Management Banner */
+        .superadmin-banner {
+            background: #633c01;
+            color: #f0f6fc;
+            padding: 4px 16px;
+            font-size: 0.75rem;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #9e6a03;
+        }
+
+        /* Bottom-left Action Buttons (Same as Equipment) */
+        .bottom-left-actions {
+            position: fixed;
+            bottom: 12px;
+            left: 16px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .btn-bottom-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-bottom-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-opname:hover {
+            border-color: #0969da;
+            color: #0969da;
+        }
+
+        .opname-table th,
+        .opname-table td {
+            padding: 5px 6px;
+            border: 1px solid var(--border);
+            font-size: 0.75rem;
+        }
+
+        .opname-table th {
+            background: var(--table-header-bg);
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- Superadmin Management Bar -->
+    <div id="superadminBanner" class="superadmin-banner">
+        <div>
+            <strong>Superadmin Active:</strong>
+            <span id="activeRoomDisplay">Room: Radar EW Workshop A</span> |
+            <span id="activeGroupDisplay">Group: Instrumentation Unit</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="/console" class="theme-toggle-btn"
+                style="padding: 3px 8px; text-decoration: none; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">🛠️
+                Admin Console</a>
+            <button onclick="openSuperadminSettings('branding')" class="theme-toggle-btn"
+                style="padding: 3px 8px; color: var(--accent);">🎨 Branding &amp; Logo</button>
+            <button onclick="openSuperadminSettings('room')" class="theme-toggle-btn"
+                style="padding: 3px 8px;">Rooms</button>
+            <button id="btnPauseRoom" onclick="togglePauseRoom()" class="theme-toggle-btn"
+                style="padding: 3px 8px; color: #cf222e;">Pause</button>
+        </div>
+    </div>
 
     <header>
         <div class="header-left">
@@ -551,7 +632,7 @@
 
     <!-- Toolbar Filters: Filter by Name, Materials ID, Project/Program, Category, Storage Location (Requirement 86) -->
     <div class="toolbar">
-        <input type="text" id="filterName" class="filter-input" placeholder="Name..." style="width:160px;"
+        <input type="text" id="filterName" class="filter-input" placeholder="Search Name, Brand, Merk, Type, Spec..." style="width:230px;"
             oninput="applyFilters()">
         <input type="text" id="filterCode" class="filter-input" placeholder="Materials ID..." style="width:130px;"
             oninput="applyFilters()">
@@ -602,27 +683,22 @@
                     <tr>
                         <th style="width:40px; text-align:center;">No</th>
                         <th id="thConsDateSort" onclick="toggleDateSort()"
-                            style="width:130px; cursor:pointer; user-select:none;"
+                            style="width:115px; cursor:pointer; user-select:none;"
                             title="Click to sort by Date & Time (Default Descending)">
                             Date &amp; Time <span id="consDateSortIcon">▼</span>
                         </th>
-                        <th style="width:115px;">Materials ID</th>
-                        <th>Material Name</th>
-                        <th style="width:140px;">Category</th>
-                        <th>Storage Location</th>
-                        <th style="width:90px; text-align:right;">Stock In</th>
-                        <th style="width:90px; text-align:right;">Stock Out</th>
-                        <th style="width:90px; text-align:right;">Balance</th>
-                        <th style="width:65px;">Unit</th>
-                        <th style="width:115px; text-align:right;">Unit Price (IDR)</th>
-                        <th style="width:125px; text-align:right;">Total Value (IDR)</th>
-                        <th style="width:100px;">Status</th>
-                        <th style="width:75px; text-align:center;">Action</th>
+                        <th style="width:180px;">Material &amp; ID</th>
+                        <th style="width:170px;">Brand, Spec &amp; Project</th>
+                        <th style="width:140px;">Category &amp; Storage</th>
+                        <th style="width:110px; text-align:right;">Movement (In/Out)</th>
+                        <th style="width:120px; text-align:right;">Stock Balance &amp; Status</th>
+                        <th style="width:140px; text-align:right;">Value &amp; Unit Price</th>
+                        <th style="width:85px; text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="balanceTableBody">
                     <tr>
-                        <td colspan="13" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
+                        <td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
                             consumables...</td>
                     </tr>
                 </tbody>
@@ -635,23 +711,18 @@
                 <thead>
                     <tr>
                         <th style="width:40px; text-align:center;">No</th>
-                        <th style="width:135px;">Date &amp; Time</th>
-                        <th style="width:115px;">Materials ID</th>
-                        <th>Material Name</th>
-                        <th style="width:110px;">Type</th>
-                        <th style="width:95px; text-align:right;">Stock In</th>
-                        <th style="width:95px; text-align:right;">Stock Out</th>
-                        <th style="width:90px; text-align:right;">Balance</th>
-                        <th style="width:65px;">Unit</th>
-                        <th style="width:120px; text-align:right;">Expense (IDR)</th>
-                        <th style="width:110px;">PIC</th>
-                        <th class="col-purpose">Purpose / Project</th>
-                        <th style="width:75px; text-align:center;">Action</th>
+                        <th style="width:115px;">Date &amp; Time</th>
+                        <th style="width:180px;">Material &amp; ID</th>
+                        <th style="width:170px;">Brand, Spec &amp; Type</th>
+                        <th style="width:120px; text-align:right;">Movement &amp; Balance</th>
+                        <th style="width:115px; text-align:right;">Expense (IDR)</th>
+                        <th class="col-purpose">PIC &amp; Purpose / Project</th>
+                        <th style="width:85px; text-align:center;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="ledgerTableBody">
                     <tr>
-                        <td colspan="11" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
+                        <td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">Loading
                             transaction ledger...</td>
                     </tr>
                 </tbody>
@@ -980,6 +1051,17 @@
         </div>
     </div>
 
+    <!-- Bottom-left action buttons for Consumables: Report, Download, Opname -->
+    <div class="bottom-left-actions">
+        <button class="btn-bottom-action" onclick="openConsumablesReportModal()" title="Consumables Storage & Inventory Report">Report</button>
+        <button class="btn-bottom-action btn-opname" onclick="downloadConsumablesOpnameChecklist()"
+            style="background:#dafbe1; color:#1a7f37; border-color:#2da44e;"
+            title="Download Physical Stock Opname Checklist & CSV">Download</button>
+        <button class="btn-bottom-action btn-opname" onclick="openConsumablesStockOpnameModal()"
+            style="background:#ddf4ff; color:#0969da; border-color:#54aeff;"
+            title="Upload and Update Stock Opname Audit">Opname</button>
+    </div>
+
     <!-- Discreet Portal Button -->
     <button id="secretLowerPortal" class="secret-lower-portal" onclick="openLoginModal()"
         title="Administrator Portal">Portal</button>
@@ -1010,12 +1092,378 @@
         </div>
     </div>
 
+    <!-- MODAL: Consumables Storage Balance & Inventory Report -->
+    <div id="consumablesReportModal" class="modal">
+        <div class="modal-box" style="width:480px;">
+            <div class="modal-header">
+                <h3 style="font-size: 0.95rem;">📄 Consumables Inventory & Storage Balance Report</h3>
+                <button class="btn-close" onclick="closeConsumablesReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="handleGenerateConsumablesReport(event)">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Periode Start (Tanggal) *</label>
+                            <input type="date" id="consRptStartDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Periode Finish (Tanggal) *</label>
+                            <input type="date" id="consRptFinishDate" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Lokasi Penyimpanan</label>
+                        <select id="consRptLocation" class="form-control">
+                            <option value="">Semua Lokasi / All Storage Locations</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Kategori Material</label>
+                        <select id="consRptCategory" class="form-control">
+                            <option value="">Semua Kategori / All Categories</option>
+                            <option value="Chemicals & Soldering">Chemicals & Soldering</option>
+                            <option value="Tapes & Adhesives">Tapes & Adhesives</option>
+                            <option value="Cleanroom Consumables">Cleanroom Consumables</option>
+                            <option value="Raw Materials">Raw Materials</option>
+                            <option value="Stationery">Stationery</option>
+                            <option value="Fasteners & Hardware">Fasteners & Hardware</option>
+                            <option value="Electronic Components">Electronic Components</option>
+                            <option value="Cables & Wire">Cables & Wire</option>
+                            <option value="Consumables">General Consumables</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pilih Project / Program</label>
+                        <select id="consRptProject" class="form-control">
+                            <option value="">Semua Project / All Projects</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status Persediaan Storage</label>
+                        <select id="consRptStatus" class="form-control">
+                            <option value="">Semua Status / All Stock Levels</option>
+                            <option value="instock">In Stock Only (Remaining > 0)</option>
+                            <option value="low">Low Stock Alert (Remaining ≤ Min Stock)</option>
+                            <option value="depleted">Depleted / Habis (Remaining = 0)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                        <button type="button" onclick="downloadConsumablesCSV()" class="theme-toggle-btn"
+                            style="color:#0969da; border-color:#0969da; font-weight:600;">📥 Export CSV</button>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" onclick="closeConsumablesReportModal()" class="theme-toggle-btn">Cancel</button>
+                            <button type="submit" class="btn-submit"
+                                style="flex:0 0 120px; background:#1f883d;">Print A4</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Consumables Stock Opname (Physical Count Audit & Storage Balance Sync) -->
+    <div id="consumablesStockOpnameModal" class="modal">
+        <div class="modal-box"
+            style="width:1150px; max-width:96vw; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-size: 0.95rem;">📋 Consumables Stock Opname (Storage Balance & Physical Count Audit)</h3>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                        Validate physical presence, actual quantities in storage, update shelf locations, and record physical discrepancies.
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeConsumablesStockOpnameModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <form id="consumablesStockOpnameForm" onsubmit="handleSaveConsumablesStockOpname(event)">
+                    <!-- Upload checklist document on top -->
+                    <div class="form-group"
+                        style="background:var(--tag-bg); border:1px dashed var(--accent); padding:10px; border-radius:6px; margin-bottom:14px;">
+                        <label style="font-weight:bold; color:var(--text-main); display:block; margin-bottom:4px;">
+                            📄 Physical Signed Audit Checklist Document (Optional) (PDF, DOCX, XLSX, Scanned image)
+                        </label>
+                        <input type="file" id="consOpnameDocFile" name="opname_document"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.zip"
+                            class="form-control" style="background:var(--bg-body);">
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px;">
+                            Attach scanned count sheets with auditor signatures. Document will be permanently archived in repository.
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-weight:bold; font-size:0.8rem;">Audit Date &amp; Time *</label>
+                            <input type="text" id="consOpnameDateTime" class="form-control" required
+                                placeholder="YYYY-MM-DD HH:MM">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-weight:bold; font-size:0.8rem;">Auditor / PIC *</label>
+                            <input type="text" id="consOpnamePic" class="form-control" required
+                                placeholder="e.g. Budi S. (Auditor)">
+                        </div>
+                    </div>
+
+                    <!-- Toolbar Filters inside Opname modal -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:8px 12px; margin-bottom:10px;">
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <span style="font-size:0.8rem; font-weight:bold;">Showing <span id="consOpnameCount">0</span> consumable items</span>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <label style="color:var(--text-muted); font-weight:bold; font-size:0.75rem;">Filter Location:</label>
+                                <select id="consOpnameLocationFilter" onchange="filterConsOpnameRows()" class="form-control"
+                                    style="padding:2px 8px; font-size:0.75rem; width:auto; margin-bottom:0;">
+                                    <option value="">All Locations</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <label style="color:var(--text-muted); font-weight:bold; font-size:0.75rem;">Filter Category:</label>
+                                <select id="consOpnameCategoryFilter" onchange="filterConsOpnameRows()" class="form-control"
+                                    style="padding:2px 8px; font-size:0.75rem; width:auto; margin-bottom:0;">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" class="theme-toggle-btn" style="padding:3px 10px; font-size:0.75rem;"
+                                onclick="toggleAllConsOpnameCheckboxes(true)">Check All</button>
+                            <button type="button" class="theme-toggle-btn" style="padding:3px 10px; font-size:0.75rem;"
+                                onclick="toggleAllConsOpnameCheckboxes(false)">Uncheck All</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="opname-table" style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+                            <thead>
+                                <tr>
+                                    <th style="width:36px; text-align:center;">
+                                        <input type="checkbox" id="consOpnameMasterCheckbox"
+                                            title="Select / Deselect All Filtered"
+                                            onchange="toggleAllConsOpnameCheckboxes(this.checked)" style="cursor:pointer;">
+                                    </th>
+                                    <th style="width:95px;">Material ID</th>
+                                    <th>Material Name &amp; Specification</th>
+                                    <th style="width:130px;">Category</th>
+                                    <th style="width:150px;">Storage Location</th>
+                                    <th style="width:90px; text-align:right;">Book Qty</th>
+                                    <th style="width:110px; text-align:right;">Physical Count</th>
+                                    <th style="width:75px; text-align:center;">Diff</th>
+                                    <th style="width:170px;">Opname Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consOpnameTableBody">
+                                <!-- Populated dynamically with current consumable balance -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+                        <button type="button" onclick="closeConsumablesStockOpnameModal()" class="theme-toggle-btn">Cancel</button>
+                        <button type="submit" class="btn-submit" id="btnSaveConsOpname"
+                            style="flex:0 0 160px; background:#1f883d;">Save Opname Audit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Superadmin Management Modal -->
+    <div id="superadminModal" class="modal">
+        <div class="modal-box" style="width:680px; max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <h3 style="font-size:0.95rem;">Administrator Console</h3>
+                <button class="btn-close" onclick="closeSuperadminModal()">&times;</button>
+            </div>
+            <!-- Sub-tabs -->
+            <div style="display:flex; border-bottom:1px solid var(--border); background:var(--bg-body); padding:0 12px; gap:8px;">
+                <button type="button" id="tabBtnSuperadminBrand" onclick="switchSuperadminTab('branding')"
+                    class="view-btn active"
+                    style="padding:8px 12px; border-bottom:2px solid var(--accent); border-radius:0; color:var(--text-main); font-weight:bold;">🎨
+                    Logo &amp; Branding</button>
+                <button type="button" id="tabBtnSuperadminRoom" onclick="switchSuperadminTab('room')" class="view-btn"
+                    style="padding:8px 12px; border-bottom:2px solid transparent; border-radius:0; color:var(--text-muted); font-weight:bold;">🏢
+                    Room &amp; Locations</button>
+                <button type="button" id="tabBtnSuperadminSig" onclick="switchSuperadminTab('sig')" class="view-btn"
+                    style="padding:8px 12px; border-bottom:2px solid transparent; border-radius:0; color:var(--text-muted); font-weight:bold;">📑
+                    A4 Signatures</button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto; flex:1;">
+                <!-- Tab 0: Brand & Logo -->
+                <div id="tabContentSuperadminBrand" style="display:block;">
+                    <form onsubmit="handleSaveBrandingModal(event)" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label style="font-weight:bold;">Application Header Name (Room Title) *</label>
+                            <input type="text" id="modalBrandRoomTitle" class="form-control" required
+                                placeholder="e.g. Radar EW Facility Workshop">
+                            <small style="color:var(--text-muted); font-size:0.75rem;">Updates the header across all web pages and PDF reports.</small>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-weight:bold;">Organization / Group Title</label>
+                            <input type="text" id="modalBrandGroupTitle" class="form-control"
+                                placeholder="e.g. EW Instrumentation &amp; Maintenance Unit">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px;">
+                            <!-- App Logo -->
+                            <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <label style="font-weight:bold; font-size:0.8rem; display:block; margin-bottom:6px;">🖥️
+                                    Web Apps Logo</label>
+                                <div id="modalPreviewAppLogo"
+                                    style="height:44px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px dashed var(--border); border-radius:4px;">
+                                </div>
+                                <input type="file" id="modalFileAppLogo" accept=".png,.jpg,.jpeg,.svg,.webp"
+                                    class="form-control" style="font-size:0.75rem; padding:3px; margin-bottom:6px;">
+                                <button type="button" onclick="handleModalResetLogo('app')" class="btn-small"
+                                    style="color:#cf222e; border-color:#cf222e; width:100%; font-size:0.75rem; padding:3px 6px;">Revert App Logo</button>
+                            </div>
+                            <!-- Report Logo -->
+                            <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <label style="font-weight:bold; font-size:0.8rem; display:block; margin-bottom:6px;">📄
+                                    PDF Report Logo</label>
+                                <div id="modalPreviewReportLogo"
+                                    style="height:44px; margin-bottom:6px; display:flex; align-items:center; justify-content:center; background:var(--bg-card); border:1px dashed var(--border); border-radius:4px;">
+                                </div>
+                                <input type="file" id="modalFileReportLogo" accept=".png,.jpg,.jpeg,.svg,.webp"
+                                    class="form-control" style="font-size:0.75rem; padding:3px; margin-bottom:6px;">
+                                <button type="button" onclick="handleModalResetLogo('report')" class="btn-small"
+                                    style="color:#cf222e; border-color:#cf222e; width:100%; font-size:0.75rem; padding:3px 6px;">Revert Report Logo</button>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                            <a href="/console" target="_blank"
+                                style="font-size:0.8rem; color:var(--link-color); font-weight:bold; text-decoration:none;">Open Full Admin Console ↗</a>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" onclick="closeSuperadminModal()"
+                                    class="theme-toggle-btn">Cancel</button>
+                                <button type="submit" class="btn-submit" style="background:#0969da;">Save Brand &amp; Logos</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 1: Room & Locations -->
+                <div id="tabContentSuperadminRoom" style="display:none;">
+                    <form onsubmit="saveSuperadminSettings(event)">
+                        <div class="form-group">
+                            <label>Workshop Room Title</label>
+                            <input type="text" id="settingRoomTitle" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Organization / Group Title</label>
+                            <input type="text" id="settingGroupTitle" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Workshop / Room State</label>
+                            <select id="settingRoomStatus" class="form-control">
+                                <option value="active">Active (Normal Logging)</option>
+                                <option value="paused">Paused (Transactions Frozen)</option>
+                            </select>
+                        </div>
+
+                        <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight:bold; font-size:0.85rem; color:var(--text-main); display:block; margin-bottom:4px;">
+                                📍 Register New Storage Location (Superadmin Only)
+                            </label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="newAdminLocationInput" class="form-control"
+                                    placeholder="e.g. Shelf A-02 Chemical Cabinet" style="margin-bottom:0;">
+                                <button type="button" onclick="registerNewLocationAdmin()" class="btn-submit"
+                                    style="flex:0 0 140px; background:#1f883d;">Add</button>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:bold; display:block; margin-bottom:4px;">Registered
+                                Facility Locations:</label>
+                            <div id="adminLocationsList"
+                                style="max-height:120px; overflow-y:auto; background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.8rem;">
+                                Loading locations...
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+                            <button type="button" onclick="closeSuperadminModal()"
+                                class="theme-toggle-btn">Cancel</button>
+                            <button type="submit" class="btn-submit" style="flex:0 0 110px;">Save Room</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 2: A4 Report Signatories -->
+                <div id="tabContentSuperadminSig" style="display:none;">
+                    <div style="margin-bottom:12px; font-size:0.8rem; color:var(--text-muted);">
+                        Configure acknowledgement signatures (<strong>Dibuat, Diperiksa, Disetujui</strong>) for all
+                        <strong>A4 Vertical</strong> reports. Persons in charge updates are recorded permanently in history.
+                    </div>
+                    <form onsubmit="handleSaveSignatoriesModal(event)">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+                            <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">1. Dibuat</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDibuatTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / PIC Name</label>
+                                <input type="text" id="modalSigDibuatName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                            <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">2. Diperiksa</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDiperiksaTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / Head Name</label>
+                                <input type="text" id="modalSigDiperiksaName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                            <div style="background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:10px;">
+                                <div style="font-weight:bold; font-size:0.8rem; color:#1a7f37; margin-bottom:6px;">3. Disetujui</div>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Nomenclature Title</label>
+                                <input type="text" id="modalSigDisetujuiTitle" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px; margin-bottom:6px;" required>
+                                <label style="font-size:0.72rem; color:var(--text-muted);">Person / Head Name</label>
+                                <input type="text" id="modalSigDisetujuiName" class="form-control"
+                                    style="font-size:0.78rem; padding:5px 8px;" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-size:0.75rem;">Change Note / Historical Log Reason</label>
+                            <input type="text" id="modalSigNotes" class="form-control"
+                                placeholder="e.g. Updated Warehouse Head and Inspector">
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                            <a href="/console" target="_blank"
+                                style="color:#0969da; text-decoration:none; font-weight:bold; font-size:0.8rem;">Open Full Console Page ↗</a>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" onclick="closeSuperadminModal()"
+                                    class="theme-toggle-btn">Cancel</button>
+                                <button type="submit" class="btn-submit"
+                                    style="flex:0 0 160px; background:#1f883d;">Save Signatures</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Historical Signatories in Modal -->
+                    <div style="margin-top:16px; border-top:1px dashed var(--border); padding-top:12px;">
+                        <div style="font-weight:bold; font-size:0.82rem; margin-bottom:6px; color:var(--text-main);">📜
+                            Signatures Historical Log:</div>
+                        <div id="modalSigHistoryList"
+                            style="max-height:140px; overflow-y:auto; background:var(--bg-body); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.75rem;">
+                            Loading history...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Registered Consumable Projects / Programs Datalist -->
     <datalist id="allConsProjectsDatalist"></datalist>
 
     <script>
         let allConsumables = [];
         let allTransactions = [];
+        let cachedLocations = [];
         let activeView = 'balance'; // 'balance' or 'ledger'
         let sortDateDesc = true; // Default descending (Req 80)
 
@@ -1104,6 +1552,7 @@
             try {
                 const res = await fetch('/api/locations');
                 const locs = await res.json();
+                cachedLocations = locs || [];
 
                 // Populate storage location filter (Req 86)
                 const filterLoc = document.getElementById('filterLocation');
@@ -1171,9 +1620,12 @@
             const loc = document.getElementById('filterLocation').value;
             const status = document.getElementById('filterStatus').value;
 
+            const nameTokens = nameQ ? nameQ.split(/\s+/) : [];
+
             if (activeView === 'balance') {
                 let filtered = allConsumables.filter(item => {
-                    const matchesName = !nameQ || item.name.toLowerCase().includes(nameQ) || (item.specification || '').toLowerCase().includes(nameQ);
+                    const combined = `${item.name} ${item.specification || ''} ${item.id} ${item.category || ''} ${item.location || ''} ${item.project || ''}`.toLowerCase();
+                    const matchesName = (nameTokens.length === 0) || nameTokens.every(tok => combined.includes(tok));
                     const matchesCode = !codeQ || item.id.toLowerCase().includes(codeQ);
                     const itemProj = (item.project || 'Radar EW Facility Project').toLowerCase();
                     const matchesProj = !projQ || itemProj === projQ;
@@ -1198,7 +1650,8 @@
                 renderBalanceTable(filtered);
             } else {
                 let filteredTxs = allTransactions.filter(tx => {
-                    const matchesName = !nameQ || (tx.consumable_name || '').toLowerCase().includes(nameQ);
+                    const combined = `${tx.consumable_name || ''} ${tx.consumable_spec || ''} ${tx.consumable_id || ''} ${tx.category || ''} ${tx.location || ''} ${tx.project || ''} ${tx.pic || ''} ${tx.purpose || ''}`.toLowerCase();
+                    const matchesName = (nameTokens.length === 0) || nameTokens.every(tok => combined.includes(tok));
                     const matchesCode = !codeQ || (tx.consumable_id || '').toLowerCase().includes(codeQ);
                     const txProj = (tx.project || 'Radar EW Facility Project').toLowerCase();
                     const matchesProj = !projQ || txProj === projQ;
@@ -1245,7 +1698,7 @@
             const allTotalVal = allConsumables.reduce((acc, x) => acc + ((x.balance !== undefined ? x.balance : x.quantity) * (x.unit_price || 0)), 0);
 
             if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:20px; color:var(--text-muted);">No consumable items found matching filter criteria.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--text-muted);">No consumable items found matching filter criteria.</td></tr>';
                 const lblEl = document.getElementById('totalExpensesLabel');
                 if (lblEl) lblEl.innerText = "Total Inventory Value:";
                 document.getElementById('totalStockValue').innerText = formatIDR(allTotalVal);
@@ -1281,25 +1734,44 @@
                     <button class="btn-action-small" onclick="deleteConsumableItem('${it.id}')" style="color:#cf222e; border-color:#cf222e; margin-left:4px;" title="Delete Record">Delete</button>
                 ` : '';
 
+                const rawDt = it.date_time || it.last_restocked || '-';
+                const dtParts = rawDt.trim().split(/\s+/);
+                const datePart = dtParts[0] || '-';
+                const timePart = dtParts[1] || '';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align:center; font-weight:bold; color:var(--text-muted);">${items.indexOf(it) + 1}</td>
-                    <td><span style="font-weight:bold; color:var(--text-muted);">${it.date_time || it.last_restocked || '-'}</span></td>
-                    <td><strong>${it.id}</strong></td>
-                    <td>
-                        <strong>${it.name}</strong><br>
-                        <small style="color:var(--text-muted);">${it.specification || '-'}</small><br>
-                        <span style="font-size:0.7rem; color:var(--link-color); font-weight:600;">📁 ${it.project || 'Radar EW Facility Project'}</span>
+                    <td style="white-space:nowrap;">
+                        <div style="font-weight:600; font-size:0.83rem; color:var(--text-main);">${datePart}</div>
+                        ${timePart ? `<div style="font-size:0.73rem; color:var(--text-muted); font-family:monospace; margin-top:1px;">${timePart}</div>` : ''}
                     </td>
-                    <td><span style="background:var(--tag-bg); padding:2px 6px; border-radius:4px; font-size:0.75rem;">${it.category}</span></td>
-                    <td>${it.location || '-'}</td>
-                    <td class="credit-qty">+${formatNumber(totalIn)}</td>
-                    <td class="debit-qty">-${formatNumber(totalOut)}</td>
-                    <td class="balance-qty">${formatNumber(balance)}</td>
-                    <td>${it.unit}</td>
-                    <td style="text-align:right;">${formatIDR(it.unit_price)}</td>
-                    <td style="text-align:right; font-weight:bold; color:var(--accent);">${formatIDR(itemTotal)}</td>
-                    <td>${badge}</td>
+                    <td>
+                        <strong style="font-size:0.88rem; color:var(--text-main);">${it.name}</strong>
+                        <div style="font-size:0.73rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">
+                            <span style="background:var(--tag-bg); padding:1px 4px; border-radius:3px; border:1px solid var(--border); font-weight:600;">ID: ${it.id}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600; font-size:0.83rem; color:var(--text-main);">${it.specification || '-'}</div>
+                        <div style="font-size:0.71rem; color:var(--text-muted); margin-top:2px;">📁 ${it.project || 'Radar EW Facility Project'}</div>
+                    </td>
+                    <td>
+                        <div><span style="background:var(--tag-bg); padding:2px 6px; border-radius:4px; font-size:0.75rem;">${it.category}</span></div>
+                        <div style="font-size:0.76rem; color:var(--accent); margin-top:3px; font-weight:600;">📍 ${it.location || '-'}</div>
+                    </td>
+                    <td style="text-align:right;">
+                        <div class="credit-qty" style="font-size:0.8rem; font-weight:600;">+${formatNumber(totalIn)}</div>
+                        <div class="debit-qty" style="font-size:0.8rem; margin-top:2px; font-weight:600;">-${formatNumber(totalOut)}</div>
+                    </td>
+                    <td style="text-align:right;">
+                        <div class="balance-qty" style="font-weight:bold; font-size:0.88rem;">${formatNumber(balance)} <small style="font-size:0.72rem; font-weight:normal; color:var(--text-muted);">${it.unit}</small></div>
+                        <div style="margin-top:2px;">${badge}</div>
+                    </td>
+                    <td style="text-align:right;">
+                        <div style="font-weight:bold; color:var(--accent); font-size:0.85rem;">${formatIDR(itemTotal)}</div>
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:1px;">${formatIDR(it.unit_price)} / ${it.unit}</div>
+                    </td>
                     <td style="text-align:center; white-space:nowrap;">
                         <button class="btn-action-small" onclick="quickLogTx('${it.id}')" title="Log Transaction">Log</button>
                         ${adminConsBtns}
@@ -1334,7 +1806,7 @@
             const allTotalExp = allTransactions.reduce((acc, x) => acc + (x.expense_amount || 0), 0);
 
             if (txs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px; color:var(--text-muted);">No stock movements recorded yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted);">No stock movements recorded yet.</td></tr>';
                 const lblEl = document.getElementById('totalExpensesLabel');
                 if (lblEl) lblEl.innerText = "Total Movement Expenses:";
                 document.getElementById('totalStockValue').innerText = formatIDR(allTotalExp);
@@ -1343,7 +1815,7 @@
                 const pctEl = document.getElementById('consPctDisplay');
                 if (pctEl) {
                     pctEl.innerText = '0.0%';
-                    pctEl.title = `Subtotal 0 IDR of Total ${formatIDR(allTotalExp)} IDR (0.0%)`;
+                    pctEl.title = `Subtotal 0 IDR of Total ${formatIDR(allTotalExp)} IDR (${pct}%)`;
                 }
                 return;
             }
@@ -1351,10 +1823,13 @@
             txs.forEach(t => {
                 totalExp += (t.expense_amount || 0);
 
-                const inStr = (t.stock_in > 0) ? `+${formatNumber(t.stock_in)}` : '-';
-                const outStr = (t.stock_out > 0) ? `-${formatNumber(t.stock_out)}` : '-';
-                const inClass = (t.stock_in > 0) ? 'credit-qty' : '';
-                const outClass = (t.stock_out > 0) ? 'debit-qty' : '';
+                const inStr = (t.stock_in > 0) ? `+${formatNumber(t.stock_in)}` : '';
+                const outStr = (t.stock_out > 0) ? `-${formatNumber(t.stock_out)}` : '';
+
+                const rawDt = t.date_time || '-';
+                const dtParts = rawDt.trim().split(/\s+/);
+                const datePart = dtParts[0] || '-';
+                const timePart = dtParts[1] || '';
 
                 const authRole = localStorage.getItem('auth-role') || 'guest';
                 const canManageConsLog = (authRole === 'superadmin' || authRole === 'admin');
@@ -1368,17 +1843,31 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td style="text-align:center; font-weight:bold; color:var(--text-muted);">${txs.indexOf(t) + 1}</td>
-                    <td><span style="font-weight:bold;">${t.date_time || '-'}</span></td>
-                    <td><strong>${t.consumable_id}</strong></td>
-                    <td><strong>${t.consumable_name || '-'}</strong></td>
-                    <td><span style="background:var(--tag-bg); padding:2px 6px; border-radius:4px; font-size:0.75rem;">${t.tx_type}</span></td>
-                    <td class="${inClass}" style="text-align:right;">${inStr}</td>
-                    <td class="${outClass}" style="text-align:right;">${outStr}</td>
-                    <td class="balance-qty">${formatNumber(t.balance_after)}</td>
-                    <td>${t.unit || 'Pcs'}</td>
+                    <td style="white-space:nowrap;">
+                        <div style="font-weight:600; font-size:0.83rem; color:var(--text-main);">${datePart}</div>
+                        ${timePart ? `<div style="font-size:0.73rem; color:var(--text-muted); font-family:monospace; margin-top:1px;">${timePart}</div>` : ''}
+                    </td>
+                    <td>
+                        <strong style="font-size:0.88rem; color:var(--text-main);">${t.consumable_name || '-'}</strong>
+                        <div style="font-size:0.73rem; color:var(--text-muted); font-family:monospace; margin-top:2px;">
+                            <span style="background:var(--tag-bg); padding:1px 4px; border-radius:3px; border:1px solid var(--border); font-weight:600;">ID: ${t.consumable_id}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:600; font-size:0.83rem; color:var(--text-main);">${t.consumable_spec || '-'}</div>
+                        <div style="margin-top:2px;"><span style="background:var(--tag-bg); padding:1px 5px; border-radius:3px; font-size:0.72rem; border:1px solid var(--border);">${t.tx_type}</span></div>
+                    </td>
+                    <td style="text-align:right;">
+                        <div class="${t.stock_in > 0 ? 'credit-qty' : 'debit-qty'}" style="font-weight:bold; font-size:0.85rem;">${inStr || outStr || '-'} <small style="font-weight:normal; font-size:0.72rem;">${t.unit || 'Pcs'}</small></div>
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:1px;">Bal: <span class="balance-qty">${formatNumber(t.balance_after)}</span></div>
+                    </td>
                     <td style="text-align:right; font-weight:bold;">${formatIDR(t.expense_amount)}</td>
-                    <td><strong>${t.pic || '-'}</strong></td>
-                    <td class="col-purpose">${t.purpose || '-'} <small style="color:var(--link-color); font-weight:600;">[${t.project || 'Radar EW Facility Project'}]</small></td>
+                    <td class="col-purpose">
+                        <div style="font-weight:bold; color:var(--text-main); font-size:0.83rem;">👤 ${t.pic || '-'}</div>
+                        <div style="margin-top:2px; font-size:0.78rem; line-height:1.35; color:var(--text-muted);">
+                            ${t.purpose || '-'} • <span style="color:var(--link-color); font-weight:600;">📁 ${t.project || 'Radar EW Facility Project'}</span>
+                        </div>
+                    </td>
                     <td style="text-align:center;">${adminDelLogBtn}</td>
                 `;
                 tbody.appendChild(tr);
@@ -2034,11 +2523,23 @@
             document.getElementById('themeToggleBtn').innerHTML = 'Theme';
         }
 
+        function getLocalDateTimeString() {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
         function updateAuthUI() {
             const role = localStorage.getItem('auth-role');
             const userName = localStorage.getItem('auth-user-name');
             const pill = document.getElementById('authStatusPill');
             const logoutBtn = document.getElementById('btnLogout');
+            const saBanner = document.getElementById('superadminBanner');
+
+            if (saBanner) {
+                saBanner.style.display = (role === 'superadmin') ? 'flex' : 'none';
+            }
+
             if (!pill) return;
             if (role === 'superadmin') {
                 pill.innerText = '🛡️ Superadmin';
@@ -2173,8 +2674,639 @@
                 if (s.app_logo_url && document.getElementById('consAppLogoContainer')) {
                     document.getElementById('consAppLogoContainer').innerHTML = `<img src="${s.app_logo_url}" alt="App Logo" style="height:32px; width:auto; max-width:48px; border-radius:6px; vertical-align:middle; object-fit:contain;">`;
                 }
+                if (s.room_title && document.getElementById('activeRoomDisplay')) {
+                    document.getElementById('activeRoomDisplay').innerText = `Room: ${s.room_title}`;
+                }
+                if (s.group_title && document.getElementById('activeGroupDisplay')) {
+                    document.getElementById('activeGroupDisplay').innerText = `Group: ${s.group_title}`;
+                }
+                if (document.getElementById('btnPauseRoom')) {
+                    const isPaused = (s.room_status === 'paused');
+                    const btn = document.getElementById('btnPauseRoom');
+                    btn.innerText = isPaused ? 'Resume' : 'Pause';
+                    btn.style.color = isPaused ? '#1a7f37' : '#cf222e';
+                }
             } catch (e) {
                 console.error("Failed to load consumables settings", e);
+            }
+        }
+
+        // --- CONSUMABLES REPORT & CSV EXPORT ---
+        function openConsumablesReportModal() {
+            const today = new Date();
+            const pastMonth = new Date(today);
+            pastMonth.setDate(today.getDate() - 30);
+
+            const sInput = document.getElementById('consRptStartDate');
+            const fInput = document.getElementById('consRptFinishDate');
+            if (sInput) sInput.value = pastMonth.toISOString().slice(0, 10);
+            if (fInput) fInput.value = today.toISOString().slice(0, 10);
+
+            const locSel = document.getElementById('consRptLocation');
+            if (locSel && cachedLocations) {
+                locSel.innerHTML = '<option value="">Semua Lokasi / All Storage Locations</option>';
+                cachedLocations.forEach(l => {
+                    locSel.innerHTML += `<option value="${l}">${l}</option>`;
+                });
+            }
+
+            const projSel = document.getElementById('consRptProject');
+            if (projSel) {
+                const pSet = new Set();
+                allConsumables.forEach(c => { if (c.project) pSet.add(c.project); });
+                projSel.innerHTML = '<option value="">Semua Project / All Projects</option>';
+                [...pSet].sort().forEach(p => {
+                    projSel.innerHTML += `<option value="${p}">${p}</option>`;
+                });
+            }
+
+            document.getElementById('consumablesReportModal').classList.add('open');
+        }
+
+        function closeConsumablesReportModal() {
+            document.getElementById('consumablesReportModal').classList.remove('open');
+        }
+
+        function handleGenerateConsumablesReport(e) {
+            e.preventDefault();
+            const sDate = document.getElementById('consRptStartDate').value;
+            const fDate = document.getElementById('consRptFinishDate').value;
+            const loc = document.getElementById('consRptLocation').value;
+            const cat = document.getElementById('consRptCategory').value;
+            const proj = document.getElementById('consRptProject').value;
+            const st = document.getElementById('consRptStatus').value;
+
+            let url = `/consumables/report/print?start_date=${encodeURIComponent(sDate)}&finish_date=${encodeURIComponent(fDate)}`;
+            if (loc) url += `&location=${encodeURIComponent(loc)}`;
+            if (cat) url += `&category=${encodeURIComponent(cat)}`;
+            if (proj) url += `&project=${encodeURIComponent(proj)}`;
+            if (st) url += `&status=${encodeURIComponent(st)}`;
+
+            window.open(url, '_blank');
+            closeConsumablesReportModal();
+        }
+
+        function downloadConsumablesCSV() {
+            const loc = document.getElementById('consRptLocation') ? document.getElementById('consRptLocation').value : '';
+            const cat = document.getElementById('consRptCategory') ? document.getElementById('consRptCategory').value : '';
+            const proj = document.getElementById('consRptProject') ? document.getElementById('consRptProject').value : '';
+            const st = document.getElementById('consRptStatus') ? document.getElementById('consRptStatus').value : '';
+
+            let url = `/api/consumables/export-csv?`;
+            if (loc) url += `&location=${encodeURIComponent(loc)}`;
+            if (cat) url += `&category=${encodeURIComponent(cat)}`;
+            if (proj) url += `&project=${encodeURIComponent(proj)}`;
+            if (st) url += `&status=${encodeURIComponent(st)}`;
+
+            window.open(url, '_blank');
+        }
+
+        function downloadConsumablesOpnameChecklist() {
+            const loc = document.getElementById('filterLocation') ? document.getElementById('filterLocation').value : '';
+            let url = '/consumables/opname/print-checklist';
+            if (loc) url += `?location=${encodeURIComponent(loc)}`;
+            window.open(url, '_blank');
+        }
+
+        // --- CONSUMABLES STOCK OPNAME AUDIT CONTROLLER ---
+        async function openConsumablesStockOpnameModal() {
+            document.getElementById('consOpnameDateTime').value = getLocalDateTimeString();
+            document.getElementById('consOpnamePic').value = localStorage.getItem('auth-user-name') || '';
+            document.getElementById('consOpnameDocFile').value = '';
+
+            const locSet = new Set(cachedLocations || []);
+            const catSet = new Set();
+            allConsumables.forEach(c => {
+                if (c.location) locSet.add(c.location);
+                if (c.category) catSet.add(c.category);
+            });
+
+            const locFilterSel = document.getElementById('consOpnameLocationFilter');
+            if (locFilterSel) {
+                locFilterSel.innerHTML = '<option value="">All Locations</option>';
+                [...locSet].sort().forEach(l => {
+                    locFilterSel.innerHTML += `<option value="${l}">${l}</option>`;
+                });
+                locFilterSel.value = '';
+            }
+
+            const catFilterSel = document.getElementById('consOpnameCategoryFilter');
+            if (catFilterSel) {
+                catFilterSel.innerHTML = '<option value="">All Categories</option>';
+                [...catSet].sort().forEach(c => {
+                    catFilterSel.innerHTML += `<option value="${c}">${c}</option>`;
+                });
+                catFilterSel.value = '';
+            }
+
+            const tbody = document.getElementById('consOpnameTableBody');
+            tbody.innerHTML = '';
+
+            allConsumables.forEach(c => {
+                const cid = c.id || c.cid || '';
+                const name = c.name || c.material_name || '';
+                const spec = c.specification || '';
+                const cat = c.category || '';
+                const loc = c.location || '';
+                const unit = c.unit || 'pcs';
+                const bookQty = Number(c.balance !== undefined ? c.balance : (c.quantity !== undefined ? c.quantity : 0));
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-cid', cid);
+                tr.setAttribute('data-location', loc.toLowerCase());
+                tr.setAttribute('data-category', cat.toLowerCase());
+                tr.setAttribute('data-orig-qty', bookQty);
+                tr.setAttribute('data-orig-loc', loc);
+
+                tr.innerHTML = `
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="cons-opname-chk" data-cid="${cid}" onchange="handleConsOpnameRowCheck(this)" style="cursor:pointer;">
+                    </td>
+                    <td><strong style="color:var(--text-main); font-family:monospace;">${cid}</strong></td>
+                    <td>
+                        <div style="font-weight:600; color:var(--text-main);">${name}</div>
+                        ${spec ? `<div style="font-size:0.75rem; color:var(--text-muted);">${spec}</div>` : ''}
+                    </td>
+                    <td><span class="badge-cat">${cat}</span></td>
+                    <td>
+                        <input type="text" class="form-control cons-opname-loc" value="${loc}" style="font-size:0.75rem; padding:3px 6px;" onchange="handleConsOpnameInputChange(this)">
+                    </td>
+                    <td style="text-align:right; font-family:monospace; font-weight:bold;">
+                        ${formatNumber(bookQty)} <span style="font-size:0.72rem; color:var(--text-muted); font-weight:normal;">${unit}</span>
+                    </td>
+                    <td style="text-align:right;">
+                        <input type="number" step="any" min="0" class="form-control cons-opname-qty" value="${bookQty}" style="font-size:0.75rem; padding:3px 6px; text-align:right; font-family:monospace; font-weight:bold;" oninput="handleConsOpnameQtyChange(this)">
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="cons-opname-diff-badge" style="font-size:0.72rem; padding:1px 6px; border-radius:10px; font-weight:bold; background:#dafbe1; color:#1a7f37;">0</span>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control cons-opname-notes" placeholder="Notes..." style="font-size:0.75rem; padding:3px 6px;" onchange="handleConsOpnameInputChange(this)">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('consOpnameCount').innerText = allConsumables.length;
+            const masterChk = document.getElementById('consOpnameMasterCheckbox');
+            if (masterChk) masterChk.checked = false;
+
+            document.getElementById('consumablesStockOpnameModal').classList.add('open');
+        }
+
+        function closeConsumablesStockOpnameModal() {
+            document.getElementById('consumablesStockOpnameModal').classList.remove('open');
+        }
+
+        function handleConsOpnameQtyChange(input) {
+            const tr = input.closest('tr');
+            if (!tr) return;
+            const origQty = parseFloat(tr.getAttribute('data-orig-qty')) || 0;
+            const newQty = parseFloat(input.value);
+            const diffBadge = tr.querySelector('.cons-opname-diff-badge');
+            const chk = tr.querySelector('.cons-opname-chk');
+
+            if (!isNaN(newQty)) {
+                const diff = newQty - origQty;
+                if (diffBadge) {
+                    if (diff > 0) {
+                        diffBadge.innerText = `+${formatNumber(diff)}`;
+                        diffBadge.style.background = '#ddf4ff';
+                        diffBadge.style.color = '#0969da';
+                    } else if (diff < 0) {
+                        diffBadge.innerText = `${formatNumber(diff)}`;
+                        diffBadge.style.background = '#ffebe9';
+                        diffBadge.style.color = '#cf222e';
+                    } else {
+                        diffBadge.innerText = '0';
+                        diffBadge.style.background = '#dafbe1';
+                        diffBadge.style.color = '#1a7f37';
+                    }
+                }
+                if (diff !== 0 && chk) {
+                    chk.checked = true;
+                    tr.style.background = 'rgba(31, 136, 61, 0.08)';
+                }
+            }
+            handleConsOpnameMasterCheckState();
+        }
+
+        function handleConsOpnameInputChange(el) {
+            const tr = el.closest('tr');
+            if (!tr) return;
+            const chk = tr.querySelector('.cons-opname-chk');
+            if (chk) chk.checked = true;
+            tr.style.background = 'rgba(31, 136, 61, 0.08)';
+            handleConsOpnameMasterCheckState();
+        }
+
+        function handleConsOpnameRowCheck(chk) {
+            const tr = chk.closest('tr');
+            if (tr) tr.style.background = chk.checked ? 'rgba(31, 136, 61, 0.08)' : '';
+            handleConsOpnameMasterCheckState();
+        }
+
+        function toggleAllConsOpnameCheckboxes(checked) {
+            const masterChk = document.getElementById('consOpnameMasterCheckbox');
+            if (masterChk) masterChk.checked = checked;
+            document.querySelectorAll('#consOpnameTableBody tr').forEach(tr => {
+                if (tr.style.display !== 'none') {
+                    const chk = tr.querySelector('.cons-opname-chk');
+                    if (chk) chk.checked = checked;
+                    tr.style.background = checked ? 'rgba(31, 136, 61, 0.08)' : '';
+                }
+            });
+        }
+
+        function handleConsOpnameMasterCheckState() {
+            const masterChk = document.getElementById('consOpnameMasterCheckbox');
+            if (!masterChk) return;
+            const visibleChks = Array.from(document.querySelectorAll('#consOpnameTableBody tr'))
+                .filter(tr => tr.style.display !== 'none')
+                .map(tr => tr.querySelector('.cons-opname-chk'))
+                .filter(Boolean);
+            masterChk.checked = visibleChks.length > 0 && visibleChks.every(c => c.checked);
+        }
+
+        function filterConsOpnameRows() {
+            const filterLoc = (document.getElementById('consOpnameLocationFilter').value || '').toLowerCase();
+            const filterCat = (document.getElementById('consOpnameCategoryFilter').value || '').toLowerCase();
+            const rows = document.querySelectorAll('#consOpnameTableBody tr');
+            let visibleCount = 0;
+            rows.forEach(tr => {
+                const rowLoc = (tr.getAttribute('data-location') || '').toLowerCase();
+                const rowCat = (tr.getAttribute('data-category') || '').toLowerCase();
+                const matchLoc = !filterLoc || rowLoc === filterLoc;
+                const matchCat = !filterCat || rowCat === filterCat;
+                if (matchLoc && matchCat) {
+                    tr.style.display = '';
+                    visibleCount++;
+                } else {
+                    tr.style.display = 'none';
+                }
+            });
+            document.getElementById('consOpnameCount').innerText = visibleCount;
+            handleConsOpnameMasterCheckState();
+        }
+
+        async function handleSaveConsumablesStockOpname(e) {
+            e.preventDefault();
+            const docInput = document.getElementById('consOpnameDocFile');
+            const hasDoc = (docInput.files && docInput.files.length > 0);
+
+            const items = [];
+            document.querySelectorAll('#consOpnameTableBody tr').forEach(tr => {
+                const chk = tr.querySelector('.cons-opname-chk');
+                const cid = tr.getAttribute('data-cid');
+                const origQty = parseFloat(tr.getAttribute('data-orig-qty')) || 0;
+                const origLoc = tr.getAttribute('data-orig-loc') || '';
+
+                const qtyInput = tr.querySelector('.cons-opname-qty');
+                const locInput = tr.querySelector('.cons-opname-loc');
+                const notesInput = tr.querySelector('.cons-opname-notes');
+
+                const physicalQty = qtyInput ? (parseFloat(qtyInput.value) || 0) : origQty;
+                const curLoc = locInput ? locInput.value.trim() : origLoc;
+                const curNotes = notesInput ? notesInput.value.trim() : '';
+
+                const isModified = (physicalQty !== origQty || curLoc !== origLoc || curNotes !== '');
+                const isChecked = chk && chk.checked;
+
+                if (isChecked || isModified) {
+                    items.push({
+                        cid: cid,
+                        physical_qty: physicalQty,
+                        location: curLoc,
+                        notes: curNotes || 'Physical count audit verified'
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                alert("Please check or adjust at least one material to save Stock Opname audit.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('date_time', document.getElementById('consOpnameDateTime').value);
+            fd.append('pic', document.getElementById('consOpnamePic').value);
+            if (hasDoc) {
+                fd.append('opname_document', docInput.files[0]);
+            }
+            fd.append('items_json', JSON.stringify(items));
+
+            try {
+                const res = await fetch('/api/consumables/stock-opname', {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "✓ Consumables Stock Opname saved successfully!");
+                    closeConsumablesStockOpnameModal();
+                    await loadConsumables();
+                    if (activeView === 'ledger') loadTransactions();
+                } else {
+                    alert("Opname error: " + (data.detail || "Server rejected opname."));
+                }
+            } catch (err) {
+                alert("Submission failed: " + err.message);
+            }
+        }
+
+        // --- SUPERADMIN SETTINGS, BRANDING & SIGNATORIES CONTROLLER ---
+        function openSuperadminSettings(defaultTab = 'branding') {
+            fetch('/api/settings').then(r => r.json()).then(s => {
+                document.getElementById('modalBrandRoomTitle').value = s.room_title || '';
+                document.getElementById('modalBrandGroupTitle').value = s.group_title || '';
+                document.getElementById('settingRoomTitle').value = s.room_title || '';
+                document.getElementById('settingGroupTitle').value = s.group_title || '';
+                document.getElementById('settingRoomStatus').value = s.room_status || 'active';
+
+                const pApp = document.getElementById('modalPreviewAppLogo');
+                if (pApp) {
+                    pApp.innerHTML = s.app_logo_url
+                        ? `<img src="${s.app_logo_url}" style="height:36px; max-width:140px; object-fit:contain;">`
+                        : `<span style="font-size:0.75rem; color:var(--text-muted);">(Default Logo)</span>`;
+                }
+                const pRep = document.getElementById('modalPreviewReportLogo');
+                if (pRep) {
+                    pRep.innerHTML = s.report_logo_url
+                        ? `<img src="${s.report_logo_url}" style="height:36px; max-width:140px; object-fit:contain;">`
+                        : `<span style="font-size:0.75rem; color:var(--text-muted);">(Default Logo)</span>`;
+                }
+
+                loadAdminLocationsModal();
+                switchSuperadminTab(defaultTab);
+                document.getElementById('superadminModal').classList.add('open');
+            });
+        }
+
+        function closeSuperadminModal() {
+            document.getElementById('superadminModal').classList.remove('open');
+        }
+
+        function switchSuperadminTab(tab) {
+            const tabBrand = document.getElementById('tabContentSuperadminBrand');
+            const tabRoom = document.getElementById('tabContentSuperadminRoom');
+            const tabSig = document.getElementById('tabContentSuperadminSig');
+            const btnBrand = document.getElementById('tabBtnSuperadminBrand');
+            const btnRoom = document.getElementById('tabBtnSuperadminRoom');
+            const btnSig = document.getElementById('tabBtnSuperadminSig');
+
+            if (tabBrand) tabBrand.style.display = 'none';
+            if (tabRoom) tabRoom.style.display = 'none';
+            if (tabSig) tabSig.style.display = 'none';
+
+            if (btnBrand) { btnBrand.style.borderBottomColor = 'transparent'; btnBrand.style.color = 'var(--text-muted)'; }
+            if (btnRoom) { btnRoom.style.borderBottomColor = 'transparent'; btnRoom.style.color = 'var(--text-muted)'; }
+            if (btnSig) { btnSig.style.borderBottomColor = 'transparent'; btnSig.style.color = 'var(--text-muted)'; }
+
+            if (tab === 'sig') {
+                if (tabSig) tabSig.style.display = 'block';
+                if (btnSig) { btnSig.style.borderBottomColor = 'var(--accent)'; btnSig.style.color = 'var(--text-main)'; }
+                loadModalSignatories();
+            } else if (tab === 'room') {
+                if (tabRoom) tabRoom.style.display = 'block';
+                if (btnRoom) { btnRoom.style.borderBottomColor = 'var(--accent)'; btnRoom.style.color = 'var(--text-main)'; }
+            } else {
+                if (tabBrand) tabBrand.style.display = 'block';
+                if (btnBrand) { btnBrand.style.borderBottomColor = 'var(--accent)'; btnBrand.style.color = 'var(--text-main)'; }
+            }
+        }
+
+        async function handleSaveBrandingModal(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('room_title', document.getElementById('modalBrandRoomTitle').value);
+            fd.append('group_title', document.getElementById('modalBrandGroupTitle').value);
+            fd.append('role', localStorage.getItem('auth-role') || 'superadmin');
+
+            const fApp = document.getElementById('modalFileAppLogo').files[0];
+            if (fApp) fd.append('app_logo', fApp);
+
+            const fRep = document.getElementById('modalFileReportLogo').files[0];
+            if (fRep) fd.append('report_logo', fRep);
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("✓ Branding and logos saved successfully!");
+                    closeSuperadminModal();
+                    loadConsSettings();
+                } else {
+                    alert("Failed to save branding: " + (data.detail || "Server error"));
+                }
+            } catch (err) {
+                alert("Error saving branding: " + err.message);
+            }
+        }
+
+        async function handleModalResetLogo(type) {
+            const label = (type === 'app') ? "Apps Web Logo" : "PDF Report Logo";
+            if (!confirm(`Revert ${label} back to system default?`)) return;
+            const fd = new FormData();
+            fd.append('role', localStorage.getItem('auth-role') || 'superadmin');
+            if (type === 'app') fd.append('reset_app_logo', '1');
+            if (type === 'report') fd.append('reset_report_logo', '1');
+
+            try {
+                const res = await fetch('/api/settings/branding', { method: 'POST', body: fd });
+                if (res.ok) {
+                    alert(`${label} reverted to default.`);
+                    openSuperadminSettings('branding');
+                    loadConsSettings();
+                }
+            } catch (err) {
+                alert("Error resetting logo: " + err.message);
+            }
+        }
+
+        async function loadModalSignatories() {
+            try {
+                const res = await fetch('/api/signatories/current');
+                const s = await res.json();
+                document.getElementById('modalSigDibuatTitle').value = s.dibuat_title || '';
+                document.getElementById('modalSigDibuatName').value = s.dibuat_name || '';
+                document.getElementById('modalSigDiperiksaTitle').value = s.diperiksa_title || '';
+                document.getElementById('modalSigDiperiksaName').value = s.diperiksa_name || '';
+                document.getElementById('modalSigDisetujuiTitle').value = s.disetujui_title || '';
+                document.getElementById('modalSigDisetujuiName').value = s.disetujui_name || '';
+
+                const hRes = await fetch('/api/signatories/history');
+                const hList = await hRes.json();
+                const box = document.getElementById('modalSigHistoryList');
+                box.innerHTML = '';
+                if (!hList || hList.length === 0) {
+                    box.innerText = 'No historical records yet.';
+                    return;
+                }
+                hList.forEach(h => {
+                    const isAct = h.is_active === 1;
+                    box.innerHTML += `
+                        <div style="padding:4px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <strong>v${h.version}</strong> (${h.created_at || '-'}): 
+                                ${h.diperiksa_title} (<em>${h.diperiksa_name}</em>) • ${h.disetujui_title} (<em>${h.disetujui_name}</em>)
+                                ${h.notes ? '<br><small style="color:var(--text-muted);">' + h.notes + '</small>' : ''}
+                            </div>
+                            <div>
+                                ${isAct ? '<span style="color:#2da44e; font-weight:bold;">Active</span>' : `<button type="button" class="btn-small" onclick="rollbackSignatoriesFromModal(${h.version})">Revert</button>`}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Error loading modal signatories", e);
+            }
+        }
+
+        async function handleSaveSignatoriesModal(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('dibuat_label', 'Dibuat');
+            fd.append('dibuat_title', document.getElementById('modalSigDibuatTitle').value);
+            fd.append('dibuat_name', document.getElementById('modalSigDibuatName').value);
+            fd.append('diperiksa_label', 'Diperiksa');
+            fd.append('diperiksa_title', document.getElementById('modalSigDiperiksaTitle').value);
+            fd.append('diperiksa_name', document.getElementById('modalSigDiperiksaName').value);
+            fd.append('disetujui_label', 'Disetujui');
+            fd.append('disetujui_title', document.getElementById('modalSigDisetujuiTitle').value);
+            fd.append('disetujui_name', document.getElementById('modalSigDisetujuiName').value);
+            fd.append('notes', document.getElementById('modalSigNotes').value);
+            fd.append('updated_by', localStorage.getItem('auth-role') || 'admin');
+
+            const res = await fetch('/api/signatories', { method: 'POST', body: fd });
+            if (res.ok) {
+                alert("Signatories configuration updated and recorded in history.");
+                document.getElementById('modalSigNotes').value = '';
+                loadModalSignatories();
+            } else {
+                alert("Failed to update signatories.");
+            }
+        }
+
+        async function rollbackSignatoriesFromModal(ver) {
+            if (!confirm(`Revert signatories to historical version ${ver}?`)) return;
+            const res = await fetch(`/api/signatories/rollback/${ver}`, { method: 'POST' });
+            if (res.ok) {
+                loadModalSignatories();
+            }
+        }
+
+        async function saveSuperadminSettings(e) {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.append('room_title', document.getElementById('settingRoomTitle').value);
+            fd.append('group_title', document.getElementById('settingGroupTitle').value);
+            fd.append('room_status', document.getElementById('settingRoomStatus').value);
+
+            const res = await fetch('/api/settings', { method: 'POST', body: fd });
+            if (res.ok) {
+                closeSuperadminModal();
+                loadConsSettings();
+                alert("Room settings updated successfully.");
+            } else {
+                alert("Failed to update settings.");
+            }
+        }
+
+        async function togglePauseRoom() {
+            const role = localStorage.getItem('auth-role');
+            if (role !== 'superadmin') {
+                alert("Permission denied. Only Superadmin can pause or resume the room.");
+                return;
+            }
+            const curStatus = (document.getElementById('btnPauseRoom').innerText.includes('Resume')) ? 'paused' : 'active';
+            const nextStatus = (curStatus === 'paused') ? 'active' : 'paused';
+            const actionLabel = (nextStatus === 'paused') ? 'PAUSE' : 'RESUME';
+
+            if (!confirm(`Are you sure you want to ${actionLabel} this workshop?`)) return;
+
+            try {
+                const res = await fetch('/api/settings/toggle-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ room_status: nextStatus })
+                });
+                if (res.ok) {
+                    loadConsSettings();
+                    alert(`Room is now ${nextStatus.toUpperCase()}.`);
+                }
+            } catch (e) {
+                alert("Error toggling room status: " + e.message);
+            }
+        }
+
+        async function loadAdminLocationsModal() {
+            try {
+                const res = await fetch('/api/locations');
+                const locs = await res.json();
+                const box = document.getElementById('adminLocationsList');
+                if (!box) return;
+                box.innerHTML = '';
+                if (!locs || locs.length === 0) {
+                    box.innerText = 'No custom locations registered yet.';
+                    return;
+                }
+                locs.forEach(loc => {
+                    box.innerHTML += `
+                        <div style="padding:4px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                            <span>📍 <strong>${loc}</strong></span>
+                            <button type="button" class="btn-small" style="color:#cf222e; border-color:#cf222e; font-size:0.7rem; padding:2px 6px;"
+                                onclick="deleteLocationAdmin('${loc}')">Delete</button>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Error loading admin locations", e);
+            }
+        }
+
+        async function registerNewLocationAdmin() {
+            const input = document.getElementById('newAdminLocationInput');
+            const val = input.value.trim();
+            if (!val) {
+                alert("Please enter a location name.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/locations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location: val, role: localStorage.getItem('auth-role') || 'superadmin' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    input.value = '';
+                    loadAdminLocationsModal();
+                    loadConsLocations();
+                    alert("✓ Location registered successfully.");
+                } else {
+                    alert("Failed to register location: " + (data.detail || "Server error"));
+                }
+            } catch (err) {
+                alert("Network error: " + err.message);
+            }
+        }
+
+        async function deleteLocationAdmin(locName) {
+            if (!confirm(`Delete facility location "${locName}"?`)) return;
+            try {
+                const res = await fetch(`/api/locations/${encodeURIComponent(locName)}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: localStorage.getItem('auth-role') || 'superadmin' })
+                });
+                if (res.ok) {
+                    loadAdminLocationsModal();
+                    loadConsLocations();
+                } else {
+                    alert("Failed to delete location.");
+                }
+            } catch (err) {
+                alert("Error deleting location: " + err.message);
             }
         }
 
@@ -2186,6 +3318,9 @@
             await loadConsProjects();
             await loadConsumables();
             loadTransactions();
+            if (new URLSearchParams(window.location.search).get('console') === '1') {
+                openSuperadminSettings();
+            }
         };
     </script>
 </body>

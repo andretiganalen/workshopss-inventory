@@ -24,3 +24,6 @@ Thumbs.db
 # IDE
 .vscode/
 *.swp
+
+# Temporary scratch scripts
+scratch/

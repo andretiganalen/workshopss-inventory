@@ -8,7 +8,7 @@ import hmac
 from datetime import datetime
 from typing import Optional, List
 from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Query
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 import uvicorn
 
 # --- DIRECTORY CONFIGURATION ---
@@ -772,6 +772,10 @@ recalculate_consumables_fifo()
 # --- FASTAPI SERVER ---
 app = FastAPI(title="Facility Workshop Inventory & Historical Repository System")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "workshopss-inventory"}
+
 @app.get("/api/signatories/current")
 def api_get_current_signatories():
     return get_current_signatories()
@@ -1310,24 +1314,27 @@ def get_transactions(
     where_params = []
     
     if search and search.strip():
-        wildcard = f"%{search.strip()}%"
-        where_clause += """ AND (
-            tl.name LIKE ? OR 
-            tl.brand LIKE ? OR 
-            tl.model LIKE ? OR 
-            tl.tool_type LIKE ? OR
-            tl.serial_number LIKE ? OR
-            tl.category LIKE ? OR
-            tl.id LIKE ? OR
-            tl.room_title LIKE ? OR
-            tl.project LIKE ? OR
-            t.date_time LIKE ? OR
-            t.pic LIKE ? OR 
-            t.purpose LIKE ? OR
-            t.condition LIKE ? OR
-            t.state LIKE ?
-        )"""
-        where_params.extend([wildcard] * 14)
+        tokens = search.strip().split()
+        for tok in tokens:
+            where_clause += """ AND (
+                (
+                    IFNULL(tl.name,'') || ' ' || 
+                    IFNULL(tl.brand,'') || ' ' || 
+                    IFNULL(tl.model,'') || ' ' || 
+                    IFNULL(tl.tool_type,'') || ' ' || 
+                    IFNULL(tl.serial_number,'') || ' ' || 
+                    IFNULL(tl.category,'') || ' ' || 
+                    IFNULL(tl.id,'') || ' ' || 
+                    IFNULL(tl.room_title,'') || ' ' || 
+                    IFNULL(tl.project,'') || ' ' || 
+                    IFNULL(t.date_time,'') || ' ' || 
+                    IFNULL(t.pic,'') || ' ' || 
+                    IFNULL(t.purpose,'') || ' ' || 
+                    IFNULL(t.condition,'') || ' ' || 
+                    IFNULL(t.state,'')
+                ) LIKE ?
+            )"""
+            where_params.append(f"%{tok}%")
         
     if location_filter and location_filter.strip():
         where_clause += " AND tl.room_title = ?"
@@ -1527,14 +1534,14 @@ async def create_transaction(
 @app.put("/api/transactions/{trans_id}")
 async def update_transaction(
     trans_id: int,
-    date_time: str = Form(...),
-    pic: str = Form(...),
-    purpose: str = Form(...),
-    tool_id: str = Form(...),
-    condition: str = Form(...),
-    state: str = Form("Active"),
-    price: float = Form(0.0),
-    is_current: int = Form(0),
+    date_time: Optional[str] = Form(None),
+    pic: Optional[str] = Form(None),
+    purpose: Optional[str] = Form(None),
+    tool_id: Optional[str] = Form(None),
+    condition: Optional[str] = Form(None),
+    state: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    is_current: Optional[int] = Form(None),
     photo: Optional[UploadFile] = File(None),
     document: Optional[UploadFile] = File(None),
     delete_photo: int = Form(0),
@@ -1557,8 +1564,22 @@ async def update_transaction(
         )
     conn = get_db()
     cursor = conn.cursor()
-    
-    p_dir, d_dir = init_repository_for_tool(tool_id)
+    cursor.execute("SELECT * FROM transactions WHERE id = ?", (trans_id,))
+    existing_tx = cursor.fetchone()
+    if not existing_tx:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+
+    actual_tool_id = (tool_id.strip() if tool_id and tool_id.strip() else existing_tx['tool_id'])
+    actual_date_time = (date_time.strip() if date_time and date_time.strip() else existing_tx['date_time'])
+    actual_pic = (pic.strip() if pic and pic.strip() else existing_tx['pic'])
+    actual_purpose = (purpose.strip() if purpose and purpose.strip() else existing_tx['purpose'])
+    actual_condition = (condition.strip() if condition and condition.strip() else existing_tx['condition'])
+    actual_state = (state.strip() if state and state.strip() else (existing_tx['state'] or 'Active'))
+    actual_price = (float(price) if price is not None else float(existing_tx['price'] or 0.0))
+    actual_is_current = (int(is_current) if is_current is not None else int(existing_tx['is_current'] or 0))
+
+    p_dir, d_dir = init_repository_for_tool(actual_tool_id)
     
     update_photo_sql = ""
     update_doc_sql = ""
@@ -1575,7 +1596,7 @@ async def update_transaction(
                     os.remove(local_p)
                 except Exception:
                     pass
-        default_svg = f"/repository/{tool_id}/photos/default_equipment.svg"
+        default_svg = f"/repository/{actual_tool_id}/photos/default_equipment.svg"
         update_photo_sql = ", photo_path = ?"
         extra_params.append(default_svg)
     elif photo and photo.filename:
@@ -1584,7 +1605,7 @@ async def update_transaction(
         dest = os.path.join(p_dir, filename)
         with open(dest, "wb") as buffer:
             buffer.write(await photo.read())
-        photo_path = f"/repository/{tool_id}/photos/{filename}"
+        photo_path = f"/repository/{actual_tool_id}/photos/{filename}"
         update_photo_sql = ", photo_path = ?"
         extra_params.append(photo_path)
 
@@ -1607,7 +1628,7 @@ async def update_transaction(
         dest = os.path.join(d_dir, filename)
         with open(dest, "wb") as buffer:
             buffer.write(await document.read())
-        doc_path = f"/repository/{tool_id}/documents/{filename}"
+        doc_path = f"/repository/{actual_tool_id}/documents/{filename}"
         update_doc_sql = ", doc_path = ?"
         extra_params.append(doc_path)
 
@@ -1617,7 +1638,7 @@ async def update_transaction(
         {update_photo_sql} {update_doc_sql}
         WHERE id = ?
     """
-    params = [date_time, pic, purpose, tool_id, condition, state, price, is_current] + extra_params + [trans_id]
+    params = [actual_date_time, actual_pic, actual_purpose, actual_tool_id, actual_condition, actual_state, actual_price, actual_is_current] + extra_params + [trans_id]
     cursor.execute(sql, params)
     
     # Also update equipment attributes / typos if provided
@@ -1645,9 +1666,9 @@ async def update_transaction(
         t_updates.append("project = ?")
         t_params.append(project.strip())
     if t_updates:
-        cursor.execute(f"UPDATE tools SET {', '.join(t_updates)} WHERE id = ?", t_params + [tool_id])
+        cursor.execute(f"UPDATE tools SET {', '.join(t_updates)} WHERE id = ?", t_params + [actual_tool_id])
 
-    sync_equipment_current_states(conn, tool_id)
+    sync_equipment_current_states(conn, actual_tool_id)
     conn.commit()
     conn.close()
     return {"status": "success", "message": "Transaction updated successfully"}
@@ -1779,6 +1800,41 @@ def update_tool_details(
         conn.commit()
     conn.close()
     return {"status": "success", "message": f"Equipment '{tid}' updated successfully."}
+
+# API: Delete Equipment Master and all its records (Superadmin / Admin)
+@app.delete("/api/tools/{tool_id}")
+def delete_tool(
+    tool_id: str,
+    role: Optional[str] = Query(None),
+    role_f: Optional[str] = Form(None)
+):
+    effective_role = (role or role_f or "guest").strip().lower()
+    if effective_role not in ["admin", "superadmin", "administrator"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Permission denied. Only Superadmin or Admin can delete equipment."
+        )
+    tid = tool_id.strip()
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM tools WHERE id = ?", (tid,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Equipment not found.")
+    
+    cursor.execute("DELETE FROM transactions WHERE tool_id = ?", (tid,))
+    cursor.execute("DELETE FROM tools WHERE id = ?", (tid,))
+    conn.commit()
+    conn.close()
+
+    t_repo = os.path.join(REPOSITORY_DIR, tid)
+    if os.path.exists(t_repo):
+        try:
+            shutil.rmtree(t_repo)
+        except Exception:
+            pass
+
+    return {"status": "success", "message": f"Equipment '{tid}' and all history deleted successfully."}
 
 # API: Delete Transaction (Superadmin / Admin per Requirement 2.2)
 @app.delete("/api/transactions/{trans_id}")
@@ -2025,7 +2081,7 @@ def get_consumables_transactions(limit: int = 150, sort_order: str = "desc"):
         SELECT 
             ct.id, ct.date_time, ct.consumable_id, ct.tx_type, ct.quantity, ct.balance_after,
             ct.pic, ct.purpose, ct.project,
-            c.name as consumable_name, c.category, c.unit, c.unit_price, c.location
+            c.name as consumable_name, c.specification as consumable_spec, c.category, c.unit, c.unit_price, c.location
         FROM consumable_transactions ct
         LEFT JOIN consumables c ON ct.consumable_id = c.id
         ORDER BY ct.date_time {order},
@@ -2236,6 +2292,150 @@ def update_consumable_details(
     conn.commit()
     conn.close()
     return {"status": "success", "message": f"Consumable '{cid}' ({new_name}) details updated successfully."}
+
+# API: Save Consumables Stock Opname with Checklist Document
+@app.post("/api/consumables/stock-opname")
+async def save_consumables_stock_opname(
+    date_time: str = Form(...),
+    pic: str = Form(...),
+    location: Optional[str] = Form(None),
+    notes: Optional[str] = Form(""),
+    opname_document: Optional[UploadFile] = File(None),
+    items_json: str = Form(...),
+    role: Optional[str] = Form(None),
+    role_q: Optional[str] = Query(None, alias="role")
+):
+    try:
+        items = json.loads(items_json)
+    except Exception:
+        items = []
+
+    doc_web_url = None
+    if opname_document and opname_document.filename:
+        safe_doc_name = clean_filename(opname_document.filename)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        dest_filename = f"cons_opname_{timestamp}_{safe_doc_name}"
+        doc_dest_path = os.path.join(OPNAME_DOC_DIR, dest_filename)
+
+        content = await opname_document.read()
+        with open(doc_dest_path, "wb") as f:
+            f.write(content)
+        doc_web_url = f"/repository/_opname/documents/{dest_filename}"
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    verified_count = len(items)
+    total_count = len(items)
+
+    distinct_locs = sorted(list(set(
+        it.get("location").strip() for it in items if it.get("location") and it.get("location").strip()
+    )))
+    summary_location = ", ".join(distinct_locs) if distinct_locs else (location or "Storage Cabinets / Shelves")
+
+    cursor.execute("""
+        INSERT INTO stock_opnames (date_time, pic, location, notes, doc_path, verified_count, total_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (date_time, pic, summary_location, f"[Consumables Opname] {notes}", doc_web_url, verified_count, total_count))
+
+    for it in items:
+        cid = it.get("consumable_id") or it.get("cid")
+        if not cid:
+            continue
+        cursor.execute("SELECT quantity, unit FROM consumables WHERE id = ?", (cid,))
+        ex_cons = cursor.fetchone()
+        sys_qty = float(ex_cons['quantity'] if ex_cons else 0.0)
+        unit_str = (ex_cons['unit'] if ex_cons else "Units") or "Units"
+
+        phys_qty = float(it.get("physical_qty") if it.get("physical_qty") is not None else sys_qty)
+        v_loc = (it.get("location") or "").strip()
+        v_notes = (it.get("notes") or "").strip()
+
+        if v_loc:
+            cursor.execute("UPDATE consumables SET location = ? WHERE id = ?", (v_loc, cid))
+
+            purpose_str = f"Physical Stock Opname Count: {phys_qty} {unit_str} (System balance was: {sys_qty} {unit_str})."
+            if v_notes:
+                purpose_str += f" Notes: {v_notes}"
+
+            cursor.execute("""
+                INSERT INTO consumable_transactions (date_time, consumable_id, tx_type, quantity, balance_after, pic, purpose, project)
+                VALUES (?, ?, 'Stock Opname', ?, ?, ?, ?, 'Radar EW Facility Project')
+            """, (date_time, cid, phys_qty, phys_qty, pic, purpose_str))
+
+            recalculate_consumables_fifo(conn, cid)
+
+    conn.commit()
+    conn.close()
+    return {
+        "status": "success",
+        "message": f"Consumables Stock Opname processed successfully. Verified {verified_count} of {total_count} items.",
+        "verified_count": verified_count,
+        "doc_url": doc_web_url
+    }
+
+# API: Export Consumables Inventory Remaining in Storage as CSV
+@app.get("/api/consumables/export-csv")
+def export_consumables_csv(
+    location: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    status: Optional[str] = Query(None)
+):
+    import io
+    import csv
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM consumables ORDER BY location ASC, category ASC, name ASC")
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    filtered = []
+    for r in rows:
+        if location and location.strip() and location != 'All Storage Locations' and r.get('location') != location:
+            continue
+        if category and category.strip() and category != 'All Categories' and r.get('category') != category:
+            continue
+        if project and project.strip() and project != 'All Projects' and r.get('project') != project:
+            continue
+
+        qty = float(r.get('quantity') or 0.0)
+        min_s = float(r.get('min_stock') or 0.0)
+        st = "depleted" if qty == 0 else ("low" if qty <= min_s else "good")
+        if status and status.strip() and status != 'All Status' and st != status.lower():
+            continue
+
+        r['computed_status'] = "Depleted" if qty == 0 else ("Low Stock" if qty <= min_s else "In Stock")
+        r['total_val'] = qty * float(r.get('unit_price') or 0.0)
+        filtered.append(r)
+
+    output = io.StringIO()
+    # Write UTF-8 BOM so Excel opens with proper encoding
+    output.write('\ufeff')
+    writer = csv.writer(output)
+    writer.writerow([
+        "Materials ID", "Name", "Specification", "Category", 
+        "Storage Location", "Project", "Min Stock", 
+        "Remaining in Storage", "Unit", "Unit Price (IDR)", 
+        "Total Storage Value (IDR)", "Status"
+    ])
+    for it in filtered:
+        writer.writerow([
+            it['id'], it['name'], it.get('specification') or '', it.get('category') or '',
+            it.get('location') or '', it.get('project') or '', it.get('min_stock') or 0,
+            it.get('quantity') or 0, it.get('unit') or 'Pcs', int(it.get('unit_price') or 0),
+            int(it['total_val']), it['computed_status']
+        ])
+
+    csv_bytes = output.getvalue().encode('utf-8-sig')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=Consumables_Storage_Inventory_{timestamp}.csv"}
+    )
+
 
 
 # --- FACILITY LOCATIONS API ---
@@ -2681,7 +2881,7 @@ def print_stock_opname_checklist():
         <span><strong>Official Inventory Physical Stock Opname Checklist (A4 Vertical)</strong></span>
         <div>
             <button onclick="window.print()" style="background:#fff; color:#1f883d; border:none; padding:5px 12px; font-weight:bold; cursor:pointer; border-radius:4px;">Print</button>
-            <button onclick="window.close()" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 12px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:6px;">Close</button>
+            <button onclick="if(window.opener){{window.close();}}else if(window.history.length>1){{window.history.back();}}else{{window.location.href='/dashboard';}}" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 12px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:6px;">Close / Back</button>
         </div>
     </div>
 
@@ -2761,6 +2961,266 @@ def print_stock_opname_checklist():
 </body>
 </html>"""
     return HTMLResponse(content=html)
+
+# --- PRINTABLE A4 CONSUMABLES STOCK OPNAME CURRENT STATE CHECKLIST ---
+@app.get("/consumables/opname/print-checklist", response_class=HTMLResponse)
+def print_consumables_stock_opname_checklist(
+    location: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    project: Optional[str] = Query(None)
+):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM consumables ORDER BY location ASC, category ASC, name ASC, id ASC")
+    all_cons = [dict(r) for r in cursor.fetchall()]
+    
+    cursor.execute("SELECT key, value FROM system_settings")
+    settings = {r['key']: r['value'] for r in cursor.fetchall()}
+    signatories = get_current_signatories(conn)
+    report_logo_html = get_report_logo_html(settings)
+    conn.close()
+    
+    filtered = []
+    for c in all_cons:
+        if location and location.strip() and location != 'All Storage Locations' and c.get('location') != location:
+            continue
+        if category and category.strip() and category != 'All Categories' and c.get('category') != category:
+            continue
+        if project and project.strip() and project != 'All Projects' and c.get('project') != project:
+            continue
+        filtered.append(c)
+        
+    rows_html = ""
+    for idx, c in enumerate(filtered, 1):
+        qty_str = f"{c.get('quantity') or 0:g} {c.get('unit') or 'Pcs'}"
+        spec_text = c.get('specification') or '-'
+        rows_html += f"""
+        <tr>
+            <td style="text-align:center; font-weight:bold;">{idx}</td>
+            <td><strong>{c['id']}</strong></td>
+            <td><strong>{c['name']}</strong><br><small style="color:#555;">{spec_text}</small></td>
+            <td><small>{c.get('category', 'Consumables')}</small></td>
+            <td><small>{c.get('location', '-')}</small></td>
+            <td style="text-align:right; font-weight:bold; color:#1a7f37; font-size:9.5px;">{qty_str}</td>
+            <td style="text-align:center;">
+                <div style="font-size:8.5px;">[ ] OK<br>[ ] DISC</div>
+            </td>
+            <td style="border-bottom:1px dashed #999; width:65px;"></td>
+            <td style="border-bottom:1px dashed #999;"></td>
+        </tr>
+        """
+        
+    audit_date = datetime.now().strftime("%d %B %Y")
+    
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Official Consumables Stock Opname Checklist - Storage Balance</title>
+    <style>
+        @page {{
+            size: A4 portrait;
+            margin: 10mm 10mm 12mm 10mm;
+        }}
+        *, *::before, *::after {{
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }}
+        body {{
+            background: #fff;
+            color: #000;
+            font-size: 10px;
+            line-height: 1.35;
+            padding: 8px;
+        }}
+        .header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }}
+        .header-title h1 {{
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+            text-transform: uppercase;
+        }}
+        .header-title h2 {{
+            font-size: 11px;
+            font-weight: normal;
+            color: #333;
+            margin: 0;
+        }}
+        .meta-strip {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            font-size: 9.5px;
+            margin-bottom: 10px;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-bottom: 14px;
+        }}
+        th, td {{
+            border: 1px solid #666;
+            padding: 4px 5px;
+            vertical-align: middle;
+        }}
+        th {{
+            background: #e9ecef;
+            font-weight: bold;
+            text-align: center;
+        }}
+        .footer-signatures {{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }}
+        .sign-col {{
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 6px;
+            background: #fafafa;
+        }}
+        .sign-label {{
+            font-weight: bold;
+            font-size: 10.5px;
+            text-transform: uppercase;
+            color: #1f883d;
+        }}
+        .sign-title {{
+            font-size: 9.5px;
+            color: #444;
+            margin-top: 2px;
+            font-weight: 600;
+        }}
+        .sign-space {{
+            height: 48px;
+        }}
+        .sign-line {{
+            border-top: 1px solid #000;
+            font-weight: bold;
+            margin: 0 10px 4px 10px;
+            padding-top: 2px;
+            font-size: 10px;
+        }}
+        .sign-sub {{
+            font-size: 8.5px;
+            color: #555;
+        }}
+        .no-print-bar {{
+            background: #24292f;
+            color: #fff;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }}
+        @media print {{
+            .no-print-bar {{ display: none; }}
+            body {{ padding: 0; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="no-print-bar">
+        <span><strong>Official Consumables Stock Opname Checklist (A4 Portrait Document)</strong></span>
+        <div>
+            <button onclick="window.print()" style="background:#1f883d; color:#fff; border:none; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px;">Print Checklist</button>
+            <button onclick="window.close()" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:8px;">Close</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            {report_logo_html}
+            <div class="header-title">
+                <h1>{settings.get('room_title', 'RADAR EW FACILITY WORKSHOP')}</h1>
+                <h2>Physical Stock Opname Audit Checklist — Consumables Storage Remaining</h2>
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-weight:bold; font-size:10px;">FORM NO: OPNAME-CONSUMABLES-RADAR-EW</div>
+            <div style="font-size:9px; color:#555;">Audit Execution Date: {audit_date}</div>
+        </div>
+    </div>
+
+    <div class="meta-strip">
+        <div><strong>Facility:</strong> {settings.get('room_title', 'Radar EW Facility')}</div>
+        <div><strong>Group Unit:</strong> {settings.get('group_title', 'EW Maintenance')}</div>
+        <div><strong>Total Consumable Items:</strong> {len(filtered)} SKUs</div>
+        <div><strong>Physical Inspector / PIC:</strong> {signatories['dibuat_name']}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:24px;">No</th>
+                <th style="width:80px;">Material ID</th>
+                <th style="width:160px;">Consumable Name &amp; Spec</th>
+                <th style="width:95px;">Category</th>
+                <th style="width:110px;">Storage Location</th>
+                <th style="width:75px; text-align:right;">Remaining Qty</th>
+                <th style="width:55px;">Physical</th>
+                <th style="width:65px;">Actual Count</th>
+                <th>Auditor Discrepancy Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {rows_html if rows_html else '<tr><td colspan="9" style="text-align:center; padding:16px;">No consumable items found matching filter criteria.</td></tr>'}
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sign-col">
+            <div class="sign-label">{signatories['dibuat_label']} (Auditor / PIC)</div>
+            <div class="sign-title">{signatories['dibuat_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['dibuat_name']}</div>
+            <div class="sign-sub">Tgl Audit: {audit_date}</div>
+        </div>
+
+        <div class="sign-col">
+            <div class="sign-label">{signatories['diperiksa_label']} (Inspector)</div>
+            <div class="sign-title">{signatories['diperiksa_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['diperiksa_name']}</div>
+            <div class="sign-sub">Official Stamp &amp; Sign</div>
+        </div>
+
+        <div class="sign-col">
+            <div class="sign-label">{signatories['disetujui_label']} (Approval)</div>
+            <div class="sign-title">{signatories['disetujui_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['disetujui_name']}</div>
+            <div class="sign-sub">Facility Manager Stamp</div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {{
+            setTimeout(function() {{
+                window.print();
+            }}, 600);
+        }};
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
 
 
 # Static Repository File Server
@@ -3011,13 +3471,98 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
             font-weight: bold;
         }
         .btn-action:hover { opacity: 0.9; }
+
+        /* High-Contrast Active/Current vs. Historical Row & Badge Styling */
+        tr.row-current-active {
+            background: #f0fdf4 !important;
+            border-left: 4px solid #1f883d !important;
+        }
+        tr.row-current-active:hover {
+            background: #dcfce7 !important;
+        }
+        :root[data-theme="dark"] tr.row-current-active {
+            background: rgba(35, 134, 54, 0.18) !important;
+            border-left: 4px solid #3fb950 !important;
+        }
+        :root[data-theme="dark"] tr.row-current-active:hover {
+            background: rgba(35, 134, 54, 0.28) !important;
+        }
+        tr.row-historical {
+            background: #ffffff;
+            opacity: 0.82;
+            transition: opacity 0.15s;
+        }
+        :root[data-theme="dark"] tr.row-historical {
+            background: #0d1117;
+            opacity: 0.78;
+        }
+        tr.row-historical:hover {
+            opacity: 1;
+            background: var(--bg-card-hover);
+        }
+        .badge-active-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #1f883d;
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 3px 9px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(31, 136, 61, 0.35);
+        }
+        :root[data-theme="dark"] .badge-active-pill {
+            background: #238636;
+        }
+        .badge-historical-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: var(--tag-bg);
+            color: var(--text-muted) !important;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .tag-latest-indicator {
+            display: inline-block;
+            font-size: 0.65rem;
+            background: #e6f4ea;
+            color: #137333;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 700;
+            border: 1px solid #ceead6;
+        }
+        :root[data-theme="dark"] .tag-latest-indicator {
+            background: rgba(46, 160, 67, 0.25);
+            color: #3fb950;
+            border-color: rgba(46, 160, 67, 0.4);
+        }
+        .badge-num-active {
+            background: #1f883d;
+            color: #ffffff;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        :root[data-theme="dark"] .badge-num-active {
+            background: #238636;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-bar">
             <div>
-                <a href="/" class="btn-back">Back</a>
+                <a href="/dashboard" class="btn-back" onclick="handleDetailBack(event)" title="Return to Equipment Inventory">← Back</a>
                 <h1 style="margin-top:12px; font-size:1.4rem;" id="toolHeaderTitle">Equipment Repository: Loading...</h1>
                 <div style="color:var(--text-muted); font-size:0.85rem; margin-top:2px;" id="toolHeaderSubtitle">Radar EW Historical Facility Asset</div>
             </div>
@@ -3050,7 +3595,7 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
                         <span class="spec-label">Total Lifetime Expenses (IDR)</span>
                         <span class="spec-val" style="color:var(--accent); font-size:1.05rem;" id="spExpenses">0</span>
                     </div>
-                    <div id="superadminEqActions" style="display:none; margin-top:14px; padding-top:10px; border-top:1px dashed var(--border); display:flex; flex-direction:column; gap:6px;">
+                    <div id="superadminEqActions" style="display:none; margin-top:14px; padding-top:10px; border-top:1px dashed var(--border); flex-direction:column; gap:6px;">
                         <button type="button" onclick="openEditEquipmentModal()" class="btn-action" style="background:#0969da; width:100%; font-size:0.8rem; margin-bottom:6px;">✏️ Edit Equipment Details / Fix Typos</button>
                         <button type="button" onclick="deleteCurrentEquipment()" class="btn-action" style="background:#cf222e; width:100%; font-size:0.8rem;">Delete Equipment</button>
                     </div>
@@ -3090,17 +3635,15 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
                         <thead>
                             <tr>
                                 <th style="width:40px; text-align:center;">No</th>
-                                <th onclick="toggleDateSort()" style="cursor:pointer; user-select:none; color:var(--text-main);" title="Click to toggle Date Sort (Default Descending)">
+                                <th onclick="toggleDateSort()" style="width:115px; cursor:pointer; user-select:none; color:var(--text-main);" title="Click to toggle Date Sort (Default Descending)">
                                     Date & Time <span id="sortDateIcon">▼</span>
                                 </th>
-                                <th>State</th>
-                                <th>Condition</th>
-                                <th style="text-align:right;">Expenses (IDR)</th>
-                                <th>PIC</th>
+                                <th style="width:140px;">State &amp; Condition</th>
+                                <th style="width:115px; text-align:right;">Expenses (IDR)</th>
+                                <th style="width:105px;">PIC</th>
                                 <th class="col-purpose">Purpose / Activity</th>
-                                <th>Photo</th>
-                                <th>Document</th>
-                                <th style="width:70px; text-align:center;" class="admin-only-col">Action</th>
+                                <th style="width:85px; text-align:center;">Attachments</th>
+                                <th style="width:85px; text-align:center;" class="admin-only-col">Action</th>
                             </tr>
                         </thead>
                         <tbody id="txTableBody">
@@ -3344,6 +3887,15 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <script>
+        function handleDetailBack(event) {
+            if (event) event.preventDefault();
+            if (window.history.length > 1 && document.referrer && !document.referrer.endsWith('/') && !document.referrer.endsWith('/landing')) {
+                window.history.back();
+            } else {
+                window.location.href = '/dashboard';
+            }
+        }
+
         const toolId = "__TOOL_ID__";
         let historicalTransactions = [];
         let sortDateDesc = true; // Req 74: Default is Descending from Date
@@ -3397,26 +3949,54 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
             }
 
             sorted.forEach((tx, idx) => {
-                const isCurrent = (tx.is_current === 1);
-                const stateClass = isCurrent ? 'state-current' : 'state-past';
-                const dateClass = isCurrent ? 'date-current' : 'date-earlier';
+                const isCurrent = (tx.is_current === 1) || (idx === 0);
                 const priceFormatted = Math.round(tx.price || 0).toLocaleString('en-US');
 
+                const dtParts = (tx.date_time || '').trim().split(/\\s+/);
+                const datePart = dtParts[0] || '-';
+                const timePart = dtParts[1] || '';
+
+                const photoThumb = tx.photo_path ? `<a href="${tx.photo_path}" target="_blank" title="View Photo"><img src="${tx.photo_path}" style="width:36px; height:26px; object-fit:cover; border-radius:3px; border:1px solid var(--border); display:inline-block; vertical-align:middle;"></a>` : '';
+                const docIcon = tx.doc_path ? `<a href="${tx.doc_path}" target="_blank" title="Open Document" style="font-size:1.15rem; text-decoration:none; vertical-align:middle;">📄</a>` : '';
+                const attachmentsDisplay = (photoThumb || docIcon) ? `<div style="display:inline-flex; align-items:center; justify-content:center; gap:5px;">${photoThumb}${docIcon}</div>` : '<span style="color:var(--text-muted); font-size:0.75rem;">-</span>';
+
+                const numDisplay = isCurrent ?
+                    `<span class="badge-num-active" title="Current Active State">${idx + 1}</span>` :
+                    `<span style="color:var(--text-muted); font-size:0.8rem;">${idx + 1}</span>`;
+
+                const dateDisplay = isCurrent ?
+                    `<div style="font-weight:700; font-size:0.84rem; color:#1a7f37;">${datePart}</div>
+                     <div style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+                         <span class="tag-latest-indicator">LATEST</span>
+                         ${timePart ? `<span style="font-size:0.73rem; color:#1a7f37; font-family:monospace; font-weight:600;">${timePart}</span>` : ''}
+                     </div>` :
+                    `<div style="font-size:0.82rem; color:var(--text-muted);">${datePart}</div>
+                     <div style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+                         <span style="font-size:0.65rem; color:var(--text-muted); font-style:italic;">History</span>
+                         ${timePart ? `<span style="font-size:0.71rem; color:var(--text-muted); font-family:monospace;">${timePart}</span>` : ''}
+                     </div>`;
+
+                const stateBadge = isCurrent ?
+                    `<span class="badge-active-pill">● ${tx.state || 'Active'}</span>` :
+                    `<span class="badge-historical-pill">${tx.state || 'History'}</span>`;
+
+                const condDisplay = isCurrent ?
+                    `<div style="font-weight:700; font-size:0.8rem; color:#1a7f37; margin-top:3px; line-height:1.2;">${tx.condition || '-'}</div>` :
+                    `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; line-height:1.2;">${tx.condition || '-'}</div>`;
+
                 const tr = document.createElement('tr');
+                tr.className = isCurrent ? 'row-current-active' : 'row-historical';
                 tr.innerHTML = `
-                    <td style="text-align:center; font-weight:bold; color:var(--text-muted);">${idx + 1}</td>
-                    <td><span class="${dateClass}">${tx.date_time}</span></td>
-                    <td><span class="${stateClass}">${tx.state || 'Active'}</span></td>
-                    <td>${tx.condition}</td>
+                    <td style="text-align:center; font-weight:bold;">${numDisplay}</td>
+                    <td style="white-space:nowrap;">${dateDisplay}</td>
+                    <td>
+                        <div>${stateBadge}</div>
+                        ${condDisplay}
+                    </td>
                     <td style="text-align:right; font-weight:bold;">${priceFormatted}</td>
                     <td><strong>${tx.pic}</strong></td>
                     <td class="col-purpose">${tx.purpose}</td>
-                    <td style="text-align:center;">
-                        ${tx.photo_path ? `<a href="${tx.photo_path}" target="_blank"><img src="${tx.photo_path}" style="width:36px; height:26px; object-fit:cover; border-radius:3px;"></a>` : '-'}
-                    </td>
-                    <td style="text-align:center;">
-                        ${tx.doc_path ? `<a href="${tx.doc_path}" target="_blank" title="Open Document" style="font-size:1.25rem; text-decoration:none;">📄</a>` : '-'}
-                    </td>
+                    <td style="text-align:center;">${attachmentsDisplay}</td>
                     <td style="text-align:center;">
                         ${(currentRole === 'superadmin' || currentRole === 'admin') ? `
                             <div style="display:flex; gap:4px; justify-content:center;">
@@ -3577,6 +4157,7 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
             e.preventDefault();
             const txId = document.getElementById('edTxId').value;
             const fd = new FormData();
+            fd.append('tool_id', (typeof currentToolObj !== 'undefined' && currentToolObj && currentToolObj.id) ? currentToolObj.id : toolId);
             fd.append('date_time', document.getElementById('edDateTime').value.trim());
             fd.append('state', document.getElementById('edState').value);
             fd.append('condition', document.getElementById('edCondition').value);
@@ -3624,10 +4205,10 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
         }
 
         async function deleteCurrentEquipment() {
-            if (currentRole !== 'superadmin') return;
+            if (currentRole !== 'superadmin' && currentRole !== 'admin') return;
             if (!confirm(`Are you sure you want to permanently delete equipment [${toolId}] and all its associated records?`)) return;
             try {
-                const res = await fetch(`/api/tools/${encodeURIComponent(toolId)}?role=superadmin`, { method: 'DELETE' });
+                const res = await fetch(`/api/tools/${encodeURIComponent(toolId)}?role=${encodeURIComponent(currentRole || 'admin')}`, { method: 'DELETE' });
                 if (res.ok) {
                     alert("Equipment deleted successfully.");
                     window.location.href = '/';
@@ -3882,16 +4463,22 @@ def print_report_view(
     rows_html = ""
     for idx, it in enumerate(items, 1):
         price_str = f"{int(it['price']):,}" if it['price'] else "0"
+        dt_parts = (it['date_time'] or '').strip().split()
+        date_p = dt_parts[0] if dt_parts else '-'
+        time_p = dt_parts[1] if len(dt_parts) > 1 else ''
+        time_html = f"<div style='font-size:7.5px; color:#666; font-family:monospace;'>{time_p}</div>" if time_p else ""
         rows_html += f"""
         <tr>
             <td style="text-align:center;">{idx}</td>
-            <td><small>{it['date_time']}</small></td>
+            <td style="white-space:nowrap;"><strong>{date_p}</strong>{time_html}</td>
             <td><strong>{it['tool_name']}</strong><br><small style="color:#555;">{it['tool_id']} | S/N: {it['serial_number']}</small></td>
-            <td><small>{it['brand']} {it['model']}</small></td>
-            <td style="font-weight:bold; color:#1a7f37; font-size:9px;">{it['state']}</td>
-            <td><small>{it['condition']}</small></td>
+            <td><strong>{it['brand']}</strong><br><small>{it['model']}</small></td>
+            <td>
+                <span style="font-weight:bold; color:#1a7f37; font-size:9px;">{it['state']}</span><br>
+                <small style="color:#555;">{it['condition']}</small>
+            </td>
             <td style="text-align:right; font-weight:bold;">{price_str}</td>
-            <td><small>{it['pic']}</small></td>
+            <td><small><strong>{it['pic']}</strong></small></td>
             <td><small>{it['purpose']}</small></td>
         </tr>
         """
@@ -4030,7 +4617,7 @@ def print_report_view(
         <span><strong>Official Inventory Report (A4 Vertical Printable Document)</strong></span>
         <div>
             <button onclick="window.print()" style="background:#fff; color:#1f883d; border:none; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px;">Print</button>
-            <button onclick="window.close()" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:8px;">Close</button>
+            <button onclick="if(window.opener){{window.close();}}else if(window.history.length>1){{window.history.back();}}else{{window.location.href='/dashboard';}}" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:8px;">Close / Back</button>
         </div>
     </div>
 
@@ -4064,17 +4651,16 @@ def print_report_view(
             <tr>
                 <th style="width:24px;">No</th>
                 <th style="width:75px;">Date &amp; Time</th>
-                <th style="width:125px;">Equipment &amp; ID</th>
-                <th style="width:85px;">Brand &amp; Model</th>
-                <th style="width:60px;">State</th>
-                <th style="width:75px;">Condition</th>
-                <th style="width:75px; text-align:right;">Expenses (IDR)</th>
+                <th style="width:130px;">Equipment &amp; ID</th>
+                <th style="width:90px;">Brand &amp; Model</th>
+                <th style="width:85px;">State &amp; Condition</th>
+                <th style="width:80px; text-align:right;">Expenses (IDR)</th>
                 <th style="width:70px;">PIC</th>
                 <th>Purpose / Detail</th>
             </tr>
         </thead>
         <tbody>
-            {rows_html if rows_html else '<tr><td colspan="9" style="text-align:center; padding:16px;">No transaction logs found for the selected period and filter criteria.</td></tr>'}
+            {rows_html if rows_html else '<tr><td colspan="8" style="text-align:center; padding:16px;">No transaction logs found for the selected period and filter criteria.</td></tr>'}
         </tbody>
     </table>
 
@@ -4114,6 +4700,330 @@ def print_report_view(
 </body>
 </html>"""
     return HTMLResponse(content=html)
+
+# --- STANDALONE A4 PRINTABLE CONSUMABLES INVENTORY & STORAGE REPORT VIEW ---
+@app.get("/consumables/report/print", response_class=HTMLResponse)
+def print_consumables_report_view(
+    start_date: Optional[str] = Query(None),
+    finish_date: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    status: Optional[str] = Query(None)
+):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM system_settings")
+    settings = {r['key']: r['value'] for r in cursor.fetchall()}
+    signatories = get_current_signatories(conn)
+    report_logo_html = get_report_logo_html(settings)
+
+    cursor.execute("SELECT * FROM consumables ORDER BY location ASC, category ASC, name ASC, id ASC")
+    all_cons = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+
+    filtered = []
+    total_qty = 0.0
+    total_val = 0.0
+    alert_count = 0
+    depleted_count = 0
+
+    for c in all_cons:
+        if location and location.strip() and location != 'All Storage Locations' and c.get('location') != location:
+            continue
+        if category and category.strip() and category != 'All Categories' and c.get('category') != category:
+            continue
+        if project and project.strip() and project != 'All Projects' and c.get('project') != project:
+            continue
+
+        qty = float(c.get('quantity') or 0.0)
+        min_s = float(c.get('min_stock') or 0.0)
+        u_price = float(c.get('unit_price') or 0.0)
+        row_val = qty * u_price
+
+        if qty == 0:
+            st = "depleted"
+            st_text = "Depleted"
+            st_color = "#cf222e"
+            depleted_count += 1
+        elif qty <= min_s:
+            st = "low"
+            st_text = "Low Stock"
+            st_color = "#d29922"
+            alert_count += 1
+        else:
+            st = "good"
+            st_text = "In Stock"
+            st_color = "#1a7f37"
+
+        if status and status.strip() and status != 'All Status' and st != status.lower():
+            continue
+
+        c['stock_status'] = st_text
+        c['status_color'] = st_color
+        c['storage_value'] = row_val
+        filtered.append(c)
+        total_qty += qty
+        total_val += row_val
+
+    rows_html = ""
+    for idx, c in enumerate(filtered, 1):
+        qty_str = f"{c.get('quantity') or 0:g} {c.get('unit') or 'Pcs'}"
+        spec_text = c.get('specification') or '-'
+        u_price_str = f"{int(c.get('unit_price') or 0):,}"
+        val_str = f"{int(c['storage_value']):,}"
+        rows_html += f"""
+        <tr>
+            <td style="text-align:center;">{idx}</td>
+            <td><strong>{c['id']}</strong></td>
+            <td><strong>{c['name']}</strong><br><small style="color:#555;">{spec_text}</small></td>
+            <td><small>{c.get('category', 'Consumables')}</small></td>
+            <td><small>{c.get('location', '-')}</small></td>
+            <td style="text-align:right;"><small>{c.get('min_stock') or 0:g} {c.get('unit') or 'Pcs'}</small></td>
+            <td style="text-align:right; font-weight:bold; color:#1a7f37; font-size:9.5px;">{qty_str}</td>
+            <td style="text-align:right;">{u_price_str}</td>
+            <td style="text-align:right; font-weight:bold;">{val_str}</td>
+            <td style="text-align:center;">
+                <span style="font-weight:bold; color:{c['status_color']}; font-size:8.5px;">● {c['stock_status']}</span>
+            </td>
+        </tr>
+        """
+
+    total_val_str = f"{int(total_val):,}"
+    total_qty_str = f"{total_qty:g}"
+    print_dt = datetime.now().strftime("%Y-%m-%d %H:%M")
+    as_of_date = datetime.now().strftime("%d %B %Y")
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Consumables Storage Remaining Inventory Report - A4 Portrait</title>
+    <style>
+        @page {{
+            size: A4 portrait;
+            margin: 10mm 10mm 15mm 10mm;
+        }}
+        *, *::before, *::after {{
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif !important;
+        }}
+        body {{
+            background: #fff;
+            color: #000;
+            font-size: 10px;
+            line-height: 1.35;
+            padding: 8px;
+        }}
+        .header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }}
+        .header-title h1 {{
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+            text-transform: uppercase;
+        }}
+        .header-title h2 {{
+            font-size: 11px;
+            font-weight: normal;
+            color: #333;
+            margin: 0;
+        }}
+        .meta-box {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            background: #f8f9fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 9.5px;
+            margin-bottom: 12px;
+        }}
+        .meta-item strong {{
+            color: #24292f;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-bottom: 14px;
+        }}
+        th, td {{
+            border: 1px solid #666;
+            padding: 4px 6px;
+            vertical-align: middle;
+        }}
+        th {{
+            background: #f3f4f6;
+            font-weight: bold;
+            text-align: center;
+        }}
+        .total-row td {{
+            font-weight: bold;
+            background: #f8f9fa;
+            border-top: 2px solid #000;
+        }}
+        .footer-signatures {{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 22px;
+            page-break-inside: avoid;
+        }}
+        .sign-col {{
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 6px;
+            background: #fafafa;
+        }}
+        .sign-label {{
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #1f883d;
+        }}
+        .sign-title {{
+            font-size: 9px;
+            color: #444;
+            margin-top: 2px;
+            font-weight: 600;
+        }}
+        .sign-space {{
+            height: 44px;
+        }}
+        .sign-line {{
+            border-top: 1px solid #000;
+            font-weight: bold;
+            margin: 0 10px 4px 10px;
+            padding-top: 2px;
+            font-size: 10px;
+        }}
+        .sign-sub {{
+            font-size: 8.5px;
+            color: #555;
+        }}
+        .no-print-bar {{
+            background: #1f883d;
+            color: #fff;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }}
+        @media print {{
+            .no-print-bar {{ display: none; }}
+            body {{ padding: 0; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="no-print-bar">
+        <span><strong>Official Consumables Storage Inventory Report (A4 Portrait Printable Document)</strong></span>
+        <div>
+            <button onclick="window.print()" style="background:#fff; color:#1f883d; border:none; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px;">Print Report</button>
+            <button onclick="if(window.opener){{window.close();}}else if(window.history.length>1){{window.history.back();}}else{{window.location.href='/consumables';}}" style="background:transparent; color:#fff; border:1px solid #fff; padding:5px 14px; font-weight:bold; cursor:pointer; border-radius:4px; margin-left:8px;">Close / Back</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            {report_logo_html}
+            <div class="header-title">
+                <h1>{settings.get('room_title', 'RADAR EW FACILITY WORKSHOP')}</h1>
+                <h2>{settings.get('group_title', 'EW Instrumentation & Maintenance Unit')} — Consumables Storage Remaining Inventory Report</h2>
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-weight:bold; font-size:10px;">FORM NO: RPT-CONS-RADAR-EW</div>
+            <div style="font-size:9px; color:#555;">As of: {as_of_date} ({print_dt})</div>
+        </div>
+    </div>
+
+    <div class="meta-box">
+        <div class="meta-item"><strong>Location Filter:</strong> {location or 'All Storage Locations'}</div>
+        <div class="meta-item"><strong>Category Filter:</strong> {category or 'All Categories'}</div>
+        <div class="meta-item"><strong>Project Filter:</strong> {project or 'All Projects'}</div>
+        <div class="meta-item"><strong>Status Filter:</strong> {status or 'All Status'}</div>
+        <div class="meta-item"><strong>Total SKUs:</strong> {len(filtered)} items</div>
+        <div class="meta-item"><strong>Total Units in Storage:</strong> {total_qty_str} units</div>
+        <div class="meta-item"><strong>Attention Required:</strong> {alert_count} Low, {depleted_count} Depleted</div>
+        <div class="meta-item"><strong>Total Inventory Value:</strong> {total_val_str} IDR</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:24px;">No</th>
+                <th style="width:80px;">Material ID</th>
+                <th style="width:160px;">Consumable Name &amp; Spec</th>
+                <th style="width:90px;">Category</th>
+                <th style="width:105px;">Storage Location</th>
+                <th style="width:65px; text-align:right;">Min Stock</th>
+                <th style="width:80px; text-align:right;">In Storage</th>
+                <th style="width:75px; text-align:right;">Unit Price (IDR)</th>
+                <th style="width:90px; text-align:right;">Total Value (IDR)</th>
+                <th style="width:70px;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {rows_html if rows_html else '<tr><td colspan="10" style="text-align:center; padding:16px;">No consumable items found matching filter criteria.</td></tr>'}
+            <tr class="total-row">
+                <td colspan="6" style="text-align:right;">Grand Total Inventory Remaining in Storage:</td>
+                <td style="text-align:right; color:#1f883d;">{total_qty_str}</td>
+                <td style="text-align:right;">-</td>
+                <td style="text-align:right; color:#0969da;">{total_val_str}</td>
+                <td style="text-align:center;">{len(filtered)} SKUs</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sign-col">
+            <div class="sign-label">{signatories['dibuat_label']}</div>
+            <div class="sign-title">{signatories['dibuat_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['dibuat_name']}</div>
+            <div class="sign-sub">Tgl: {as_of_date}</div>
+        </div>
+
+        <div class="sign-col">
+            <div class="sign-label">{signatories['diperiksa_label']}</div>
+            <div class="sign-title">{signatories['diperiksa_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['diperiksa_name']}</div>
+            <div class="sign-sub">Official Stamp &amp; Sign</div>
+        </div>
+
+        <div class="sign-col">
+            <div class="sign-label">{signatories['disetujui_label']}</div>
+            <div class="sign-title">{signatories['disetujui_title']}</div>
+            <div class="sign-space"></div>
+            <div class="sign-line">{signatories['disetujui_name']}</div>
+            <div class="sign-sub">Facility Manager Stamp</div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {{
+            setTimeout(function() {{
+                window.print();
+            }}, 600);
+        }};
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
 
 # --- HEALTH CHECK FOR RENDER & MONITORING ---
 @app.get("/health")
@@ -4335,12 +5245,19 @@ def print_equipment_detail_a4(tool_id: str):
         date_style = "font-weight:bold; color:#1a7f37;" if is_curr else "color:#666;"
         doc_cell = f"<a href='{tx['doc_path']}' target='_blank' style='text-decoration:none; font-size:11px;'>📄</a>" if tx.get('doc_path') else "-"
         
+        dt_parts = (tx.get('date_time') or '').strip().split()
+        date_p = dt_parts[0] if dt_parts else '-'
+        time_p = dt_parts[1] if len(dt_parts) > 1 else ''
+        time_html = f"<div style='font-size:7.5px; color:#666; font-family:monospace;'>{time_p}</div>" if time_p else ""
+        
         rows_html += f"""
         <tr>
             <td style="text-align:center; font-weight:bold;">{idx}</td>
-            <td><span style="{date_style}"><small>{tx.get('date_time', '-')}</small></span></td>
-            <td><span style="{state_style}">{tx.get('state', '-')}</span></td>
-            <td><small>{tx.get('condition', '-')}</small></td>
+            <td style="white-space:nowrap;"><span style="{date_style}"><strong>{date_p}</strong></span>{time_html}</td>
+            <td>
+                <span style="{state_style}">{tx.get('state', '-')}</span><br>
+                <small style="color:#555;">{tx.get('condition', '-')}</small>
+            </td>
             <td style="text-align:right; font-weight:bold;">{price_str}</td>
             <td><small><strong>{tx.get('pic', '-')}</strong></small></td>
             <td><small>{tx.get('purpose', '-')}</small></td>
@@ -4501,6 +5418,7 @@ def print_equipment_detail_a4(tool_id: str):
             <div><strong>Printed:</strong> {now_str}</div>
             <div style="margin-top:4px;" class="no-print">
                 <button onclick="window.print()" style="font-weight:bold; padding:4px 12px; cursor:pointer;">Print</button>
+                <button onclick="if(window.opener){{window.close();}}else if(window.history.length>1){{window.history.back();}}else{{window.location.href='/detail/{tool_id}';}}" style="font-weight:bold; padding:4px 12px; cursor:pointer; margin-left:6px;">Back / Close</button>
             </div>
         </div>
     </div>
@@ -4521,9 +5439,8 @@ def print_equipment_detail_a4(tool_id: str):
             <tr>
                 <th style="width:24px; text-align:center;">No</th>
                 <th style="width:80px;">Date &amp; Time</th>
-                <th style="width:65px;">State</th>
-                <th style="width:75px;">Condition</th>
-                <th style="width:75px; text-align:right;">Expenses (IDR)</th>
+                <th style="width:85px;">State &amp; Condition</th>
+                <th style="width:80px; text-align:right;">Expenses (IDR)</th>
                 <th style="width:75px;">PIC</th>
                 <th>Purpose / Maintenance Activity</th>
                 <th style="width:30px; text-align:center;">Doc</th>
