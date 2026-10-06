@@ -772,10 +772,6 @@ recalculate_consumables_fifo()
 # --- FASTAPI SERVER ---
 app = FastAPI(title="Facility Workshop Inventory & Historical Repository System")
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "workshopss-inventory"}
-
 @app.get("/api/signatories/current")
 def api_get_current_signatories():
     return get_current_signatories()
@@ -5028,7 +5024,7 @@ def print_consumables_report_view(
 # --- HEALTH CHECK FOR RENDER & MONITORING ---
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "radar-ew-inventory", "timestamp": datetime.now().isoformat()}
+    return {"status": "ok", "service": "workshopss-inventory", "timestamp": datetime.now().isoformat()}
 
 # --- LANDING PAGE & DASHBOARD ROUTES ---
 @app.get("/", response_class=HTMLResponse)
