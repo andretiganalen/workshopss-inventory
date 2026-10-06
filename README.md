@@ -120,6 +120,34 @@ The application includes native **`render.yaml`** and **`Procfile`** configurati
 
 ---
 
+## 📱 Mobile & Multi-OS Compatibility (Android, Huawei, iOS)
+
+The application is engineered as a responsive Progressive Web App (PWA) optimized for smartphones across all major operating systems:
+
+### 1. 🤖 Android (Google Chrome, Samsung Internet, Microsoft Edge)
+- **Installation**: Tap the browser menu (⋮) -> **"Install App"** or **"Add to Home screen"**.
+- **Features**: Native standalone window without browser URL bar, custom emerald green theme color, hardware-accelerated touch scrolling, and quick app shortcuts.
+
+### 2. 🔴 Huawei (HarmonyOS / EMUI & Huawei Browser / Petal)
+- **Installation**: Open in **Huawei Browser** or **Petal Browser** -> Tap menu (⋮) -> **"Add to Home Screen"**.
+- **Features**: Standalone PWA mode with high-resolution vector and maskable icons, dynamic viewport adjustment, and gesture navigation bar safe-area insets.
+
+### 3. 🍏 Apple iOS (iPhone & iPad Safari)
+- **Installation**: Open in **Safari** -> Tap the Share button (⎋ with arrow) -> **"Add to Home Screen"** (`+`).
+- **Features**:
+  - Full-screen web app experience (`apple-mobile-web-app-capable`).
+  - Native status bar styling (`apple-mobile-web-app-status-bar-style: black-translucent`).
+  - Notch & Dynamic Island safe area margin handling via `viewport-fit=cover` and `env(safe-area-inset-top)`.
+  - Zero-delay touch response and prevention of unwanted auto-zooming on form fields.
+
+### 📷 Camera & Direct Mobile Photo Upload
+All equipment and receipt photo upload fields automatically integrate with mobile OS camera intents:
+- Direct capture using the device's camera.
+- Selection from device photo gallery / file manager.
+- Support for documents, receipts, and technical manuals.
+
+---
+
 ## 🔒 Default Role Credentials
 
 To access administrative functions from the Portal (🔒 icon on the navbar):
@@ -132,3 +160,4 @@ To access administrative functions from the Portal (🔒 icon on the navbar):
 ## 📄 License
 Internal Facility System — Radar & Electronic Warfare Division.
 All rights reserved.
+

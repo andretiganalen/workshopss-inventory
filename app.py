@@ -3256,7 +3256,19 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1f883d">
+    <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SS Inventory">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <meta name="format-detection" content="telephone=no">
     <title>Equipment Detail & Repository - __TOOL_ID__</title>
     <style>
         *, *::before, *::after {
@@ -3551,6 +3563,57 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
         }
         :root[data-theme="dark"] .badge-num-active {
             background: #238636;
+        }
+
+        /* --- MOBILE MULTI-OS RESPONSIVE STYLING (ANDROID, HUAWEI, IOS) --- */
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+                padding-top: max(12px, var(--sat));
+                padding-bottom: max(32px, var(--sab));
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .header-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+            }
+
+            .grid-layout {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .table-container {
+                -webkit-overflow-scrolling: touch;
+                overflow-x: auto;
+            }
+
+            .form-control, input, select, textarea {
+                font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+                min-height: 40px;
+            }
+
+            .btn-back, .btn-action {
+                min-height: 40px;
+            }
         }
     </style>
 </head>
@@ -4427,6 +4490,15 @@ DETAIL_PAGE_TEMPLATE = """<!DOCTYPE html>
         }
 
         loadToolDetail();
+
+        // PWA Service Worker Registration for Android, Huawei & iOS
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.warn('PWA ServiceWorker registration failed:', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
@@ -5025,6 +5097,42 @@ def print_consumables_report_view(
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "workshopss-inventory", "timestamp": datetime.now().isoformat()}
+
+# --- PWA ASSETS & MOBILE MULTI-OS SUPPORT (ANDROID, HUAWEI, IOS) ---
+@app.get("/manifest.json")
+def get_manifest():
+    manifest_path = os.path.join(BASE_DIR, "manifest.json")
+    if os.path.exists(manifest_path):
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="Manifest not found")
+
+@app.get("/sw.js")
+def get_service_worker():
+    sw_path = os.path.join(BASE_DIR, "sw.js")
+    if os.path.exists(sw_path):
+        return FileResponse(sw_path, media_type="application/javascript", headers={"Service-Worker-Allowed": "/"})
+    raise HTTPException(status_code=404, detail="Service worker not found")
+
+@app.get("/icon.svg")
+def get_icon_svg():
+    icon_path = os.path.join(BASE_DIR, "icon.svg")
+    if os.path.exists(icon_path):
+        return FileResponse(icon_path, media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="Icon not found")
+
+@app.get("/icon-192.png")
+def get_icon_192():
+    icon_path = os.path.join(BASE_DIR, "icon-192.png")
+    if os.path.exists(icon_path):
+        return FileResponse(icon_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon not found")
+
+@app.get("/icon-512.png")
+def get_icon_512():
+    icon_path = os.path.join(BASE_DIR, "icon-512.png")
+    if os.path.exists(icon_path):
+        return FileResponse(icon_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Icon not found")
 
 # --- LANDING PAGE & DASHBOARD ROUTES ---
 @app.get("/", response_class=HTMLResponse)

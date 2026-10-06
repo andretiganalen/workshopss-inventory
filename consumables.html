@@ -3,7 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1f883d">
+    <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SS Consumables">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <meta name="format-detection" content="telephone=no">
     <title>Radar EW Facility - Consumables & Materials Inventory</title>
     <style>
         *,
@@ -559,6 +571,158 @@
 
         .opname-table th {
             background: var(--table-header-bg);
+        }
+
+        /* --- MOBILE MULTI-OS RESPONSIVE STYLING (ANDROID, HUAWEI, IOS) --- */
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .table-container {
+            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                height: 100dvh;
+                padding-top: var(--sat);
+                padding-bottom: var(--sab);
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 10px 14px;
+            }
+
+            .header-left {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .header-left h1 {
+                font-size: 1.05rem;
+                flex: 1 1 auto;
+            }
+
+            .header-actions {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .nav-tabs {
+                margin-left: 0;
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+                width: 100%;
+                padding-bottom: 3px;
+            }
+
+            .nav-tab {
+                white-space: nowrap;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                min-height: 36px;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .view-toggle {
+                margin-left: 0;
+                width: 100%;
+                display: flex;
+            }
+
+            .view-btn {
+                flex: 1;
+                text-align: center;
+                min-height: 36px;
+                padding: 6px 8px;
+            }
+
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 10px 14px;
+            }
+
+            .filter-group {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .filter-input {
+                min-height: 42px;
+                width: 100%;
+                font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+            }
+
+            .filter-select {
+                min-height: 42px;
+                width: 100%;
+                max-width: 100%;
+                font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+            }
+
+            .form-control, input, select, textarea {
+                font-size: 16px !important; /* Avoids iOS Safari auto-zoom on form focus */
+            }
+
+            /* Responsive touch modals */
+            .modal-box {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                max-height: 90dvh;
+                margin: auto;
+                border-radius: 12px;
+            }
+
+            .modal-body {
+                max-height: calc(90dvh - 70px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Floating bottom actions adapting to safe area gesture bar */
+            .bottom-left-actions {
+                bottom: max(12px, calc(var(--sab) + 8px));
+                left: 12px;
+                right: 12px;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .btn-bottom-action {
+                min-height: 40px;
+                font-size: 0.78rem;
+                padding: 6px 12px;
+            }
+
+            .meta-strip {
+                padding: 8px 14px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -3322,6 +3486,15 @@
                 openSuperadminSettings();
             }
         };
+
+        // PWA Service Worker Registration for Android, Huawei & iOS
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.warn('PWA ServiceWorker registration failed:', err);
+                });
+            });
+        }
     </script>
 </body>
 

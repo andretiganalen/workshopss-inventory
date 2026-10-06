@@ -3,7 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1f883d">
+    <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SS Inventory">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <meta name="format-detection" content="telephone=no">
     <title>Facility Workshop Inventory & Historical Repository</title>
     <style>
         /* Requirement 18: Standard Arial font throughout the entire app */
@@ -766,6 +778,175 @@
 
         .opname-table th {
             background: var(--table-header-bg);
+        }
+
+        /* --- MOBILE MULTI-OS RESPONSIVE STYLING (ANDROID, HUAWEI, IOS) --- */
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+        }
+
+        /* Smooth momentum touch scrolling & tap ergonomics */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .table-container {
+            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                height: 100dvh;
+                padding-top: var(--sat);
+                padding-bottom: var(--sab);
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 10px 14px;
+            }
+
+            .header-left {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .header-left h1 {
+                font-size: 1.05rem;
+                flex: 1 1 auto;
+            }
+
+            .header-actions {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .nav-tabs {
+                margin-left: 0;
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+                width: 100%;
+                padding-bottom: 3px;
+            }
+
+            .nav-tab {
+                white-space: nowrap;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+                min-height: 36px;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 10px 14px;
+            }
+
+            .search-box {
+                width: 100%;
+                min-width: 0;
+                flex: none;
+            }
+
+            .search-box input {
+                min-height: 42px;
+                font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+            }
+
+            .filter-select, .btn-reset, .date-filter-box, .btn-header {
+                min-height: 40px;
+                font-size: 14px;
+            }
+
+            .filter-select {
+                font-size: 16px !important; /* Critical: avoids iOS Safari zoom */
+            }
+
+            .form-control, input, select, textarea {
+                font-size: 16px !important; /* Avoids iOS Safari auto-zoom on form focus */
+            }
+
+            /* Fullscreen slide-in sidebar on mobile */
+            .sidebar {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                left: -100vw !important;
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                border-right: none;
+                padding-top: var(--sat);
+                padding-bottom: var(--sab);
+            }
+
+            .sidebar.open {
+                left: 0 !important;
+            }
+
+            .sidebar-header {
+                padding: 16px;
+            }
+
+            .sidebar-body {
+                padding: 16px;
+                padding-bottom: calc(var(--sab) + 32px);
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Responsive touch modals */
+            .modal-box {
+                width: 95vw !important;
+                max-width: 95vw !important;
+                max-height: 90dvh;
+                margin: auto;
+                border-radius: 12px;
+            }
+
+            .modal-body {
+                max-height: calc(90dvh - 70px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Floating bottom actions adapting to home indicator / gesture bar */
+            .bottom-left-actions {
+                bottom: max(12px, calc(var(--sab) + 8px));
+                left: 12px;
+                right: 12px;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .btn-bottom-action {
+                min-height: 40px;
+                font-size: 0.78rem;
+                padding: 6px 12px;
+            }
+
+            .meta-strip {
+                padding: 8px 14px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -3840,6 +4021,15 @@
                 loadSettings();
                 alert(`Workshop room is now ${newStatus.toUpperCase()}`);
             }
+        }
+
+        // PWA Service Worker Registration for Android, Huawei & iOS
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.warn('PWA ServiceWorker registration failed:', err);
+                });
+            });
         }
     </script>
 </body>

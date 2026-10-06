@@ -3,7 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1f883d">
+    <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SS Inventory">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <meta name="format-detection" content="telephone=no">
     <title>Radar EW Facility Workshop</title>
     <style>
         *,
@@ -435,10 +447,24 @@
             display: block;
         }
 
-        /* Responsive */
+        /* Responsive & Multi-OS Mobile Optimization */
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            padding-top: max(24px, var(--sat));
+            padding-bottom: max(24px, var(--sab));
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         @media (max-width: 480px) {
             body {
-                padding: 16px;
+                padding: max(16px, var(--sat)) 16px max(16px, var(--sab)) 16px;
             }
 
             .glass-card {
@@ -447,7 +473,16 @@
             }
 
             .hero-title {
-                font-size: 23px;
+                font-size: 22px;
+            }
+
+            .input-field {
+                font-size: 16px !important; /* Prevents auto-zoom in iOS Safari */
+                min-height: 44px;
+            }
+
+            .btn-primary, .guest-btn {
+                min-height: 44px;
             }
         }
     </style>
@@ -834,6 +869,15 @@
             initTheme();
             checkActiveSession();
         });
+
+        // PWA Service Worker Registration for Android, Huawei & iOS
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.warn('PWA ServiceWorker registration failed:', err);
+                });
+            });
+        }
     </script>
 </body>
 

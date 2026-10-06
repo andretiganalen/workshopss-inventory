@@ -1,0 +1,57 @@
+{
+  "name": "Radar EW Facility Workshop Inventory",
+  "short_name": "SS Inventory",
+  "description": "Radar EW Facility Workshop Equipment, Consumables & Repository System",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1117",
+  "theme_color": "#1f883d",
+  "lang": "en",
+  "scope": "/",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Equipment Inventory",
+      "short_name": "Equipment",
+      "description": "Open Equipment and Tools Inventory",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Consumables Inventory",
+      "short_name": "Consumables",
+      "description": "Open Consumables & Materials Inventory",
+      "url": "/consumables",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Console",
+      "short_name": "Console",
+      "description": "Open Facility Administrator Console",
+      "url": "/console",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
